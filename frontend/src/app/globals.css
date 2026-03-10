@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b1020;
+  --foreground: #e8edf7;
+  --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Aptos Display", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at top, rgba(93, 135, 255, 0.12), transparent 24%),
+    radial-gradient(circle at 85% 15%, rgba(98, 214, 180, 0.1), transparent 18%),
+    linear-gradient(180deg, #0b1020 0%, #0d1326 52%, #0a0f1c 100%);
+  font-family: var(--font-body);
+  margin: 0;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+}

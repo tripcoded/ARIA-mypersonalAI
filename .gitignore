@@ -4,6 +4,7 @@ ARIA-mypersonalAI/
 
 # Dependencies
 node_modules/
+package-lock.json
 venv/
 env/
 ENV/
@@ -55,6 +56,7 @@ __pycache__/
 .mypy_cache/
 .coverage
 htmlcov/
+tsconfig.tsbuildinfo
 
 # Database and storage
 chroma_db/
