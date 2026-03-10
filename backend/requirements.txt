@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+langchain
+langchain-google-genai
+chromadb
+python-multipart
+youtube-transcript-api
+PyGithub
+pdfplumber
+pydantic
+python-dotenv
