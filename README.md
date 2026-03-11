@@ -82,7 +82,9 @@ The frontend expects the backend at `http://localhost:8000` unless `NEXT_PUBLIC_
 ## Operational Notes
 
 - GitHub ingestion is intentionally bounded to avoid excessively long indexing jobs.
-- YouTube ingestion depends on transcript availability and can fail for videos with disabled, blocked, or unavailable transcripts.
+- YouTube ingestion is currently unreliable and should be treated as experimental.
+- A YouTube URL may be accepted by the UI and sent to the backend, but transcript retrieval can still fail or return no usable content.
+- At the moment, YouTube ingestion should not be considered a dependable source of indexed knowledge for this project.
 - Indexed sources can be removed directly from the frontend knowledge ledger.
 - Local runtime artifacts such as `chroma_db/`, `uploads/`, logs, virtual environments, and build output should not be committed.
 
@@ -99,4 +101,3 @@ All rights reserved.
 
 This repository, its source code, documentation, design, and associated materials are proprietary.
 No part of this repository may be copied, reproduced, distributed, modified, sublicensed, published, or used for commercial or non-commercial redistribution without prior explicit written permission from the copyright holder.
-
