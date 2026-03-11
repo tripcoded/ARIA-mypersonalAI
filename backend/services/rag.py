@@ -7,27 +7,27 @@ from langchain_community.vectorstores import Chroma
 from langchain_classic.chains import RetrievalQA
 from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
-from langchain_google_genai import (
-    ChatGoogleGenerativeAI,
-    GoogleGenerativeAIEmbeddings,
-)
+from langchain_groq import ChatGroq
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
 CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "./chroma_db")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
-CHAT_MODEL = os.getenv("GEMINI_CHAT_MODEL", "gemini-2.5-flash")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
 
 
 def get_vector_db():
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        google_api_key=GEMINI_API_KEY,
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-    return Chroma(persist_directory=CHROMA_DB_DIR, embedding_function=embeddings)
 
+    return Chroma(
+        persist_directory=CHROMA_DB_DIR,
+        embedding_function=embeddings
+    )
+    
 
 def add_to_vector_db(text: str, source: str, source_type: str = "unknown"):
     if not text.strip():
@@ -103,7 +103,10 @@ def get_knowledge_stats():
 
 def get_answer(query: str):
     db = get_vector_db()
-    llm = ChatGoogleGenerativeAI(model=CHAT_MODEL, google_api_key=GEMINI_API_KEY)
+    llm = ChatGroq(
+        model=CHAT_MODEL,
+        api_key=GROQ_API_KEY
+    )
 
     prompt = PromptTemplate(
         input_variables=["context", "question"],

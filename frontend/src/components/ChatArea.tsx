@@ -250,36 +250,24 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     });
   };
 
-  const refreshSemanticResults = async (query: string) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, limit: 4 }),
-      });
-      const data = (await res.json()) as { results?: SearchResult[] };
-      setSemanticResults(res.ok ? (data.results ?? []) : []);
-    } catch {
-      setSemanticResults([]);
-    }
-  };
-
   const sendMessage = async (message: string) => {
-    if (!message.trim()) {
+    const trimmedMessage = message.trim();
+
+    if (!trimmedMessage || loading) {
       return;
     }
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: message }]);
+    setSemanticResults([]);
+    setMessages((prev) => [...prev, { role: "user", content: trimmedMessage }]);
     setLoading(true);
     setListeningState(voiceActiveRef.current ? "ARIA is thinking..." : listeningState);
-    await refreshSemanticResults(message);
 
     try {
       const res = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message: trimmedMessage }),
       });
       const data = (await res.json()) as { answer?: string; sources?: string[]; detail?: string };
 
