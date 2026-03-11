@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from services.ingestion import process_github, process_pdf, process_youtube
 from services.rag import (
     add_to_vector_db,
+    add_texts_to_vector_db,
     get_answer,
     get_knowledge_stats,
     semantic_search,
@@ -79,6 +80,8 @@ async def ingest_pdf(file: UploadFile = File(...)):
         text = process_pdf(file_path)
         add_to_vector_db(text, f"PDF: {file.filename}", source_type="pdf")
         return {"filename": file.filename, "status": "processed"}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -89,6 +92,8 @@ async def ingest_youtube(request: URLRequest):
         text = process_youtube(request.url)
         add_to_vector_db(text, f"YouTube: {request.url}", source_type="youtube")
         return {"url": request.url, "status": "processed"}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -97,13 +102,19 @@ async def ingest_youtube(request: URLRequest):
 async def ingest_github(request: URLRequest):
     try:
         data = process_github(request.url, os.getenv("GITHUB_TOKEN"))
-        for file in data:
-            add_to_vector_db(
-                file["content"],
-                f"GitHub: {request.url}/{file['path']}",
-                source_type="github",
-            )
+        add_texts_to_vector_db(
+            [
+                {
+                    "text": file["content"],
+                    "source": f"GitHub: {request.url}/{file['path']}",
+                }
+                for file in data
+            ],
+            source_type="github",
+        )
         return {"url": request.url, "status": "processed", "files_count": len(data)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

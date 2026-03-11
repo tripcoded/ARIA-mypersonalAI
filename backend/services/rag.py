@@ -52,6 +52,38 @@ def add_to_vector_db(text: str, source: str, source_type: str = "unknown"):
     db.persist()
 
 
+def add_texts_to_vector_db(items: list[dict], source_type: str = "unknown"):
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    ingested_at = datetime.now(timezone.utc).isoformat()
+    docs = []
+
+    for item in items:
+        text = item.get("text", "")
+        source = item.get("source", "Unknown source")
+
+        if not text or not text.strip():
+            continue
+
+        for chunk in text_splitter.split_text(text):
+            docs.append(
+                Document(
+                    page_content=chunk,
+                    metadata={
+                        "source": source,
+                        "source_type": source_type,
+                        "ingested_at": ingested_at,
+                    },
+                )
+            )
+
+    if not docs:
+        raise ValueError("No extractable text found for ingestion.")
+
+    db = get_vector_db()
+    db.add_documents(docs)
+    db.persist()
+
+
 def semantic_search(query: str, limit: int = 5):
     db = get_vector_db()
     results = db.similarity_search_with_score(query, k=limit)

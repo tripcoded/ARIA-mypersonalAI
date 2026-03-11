@@ -1,8 +1,15 @@
 langchain
+langchain-classic
 langchain-community
+langchain-core
 langchain-groq
+langchain-text-splitters
 chromadb
 fastapi
 uvicorn
 sentence-transformers
 pypdf
+pdfplumber
+python-dotenv
+youtube-transcript-api
+PyGithub
