@@ -10,6 +10,7 @@ from services.ingestion import process_github, process_pdf, process_youtube
 from services.rag import (
     add_to_vector_db,
     add_texts_to_vector_db,
+    delete_source,
     get_answer,
     get_knowledge_stats,
     semantic_search,
@@ -44,6 +45,10 @@ class SearchRequest(BaseModel):
     limit: int = Field(default=5, ge=1, le=10)
 
 
+class DeleteSourceRequest(BaseModel):
+    source: str = Field(..., min_length=1)
+
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to ARIA API"}
@@ -58,6 +63,16 @@ def health_check():
 def knowledge_stats():
     try:
         return get_knowledge_stats()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.delete("/knowledge/source")
+def remove_knowledge_source(request: DeleteSourceRequest = Body(...)):
+    try:
+        return delete_source(request.source)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

@@ -133,6 +133,23 @@ def get_knowledge_stats():
     }
 
 
+def delete_source(source: str):
+    if not source or not source.strip():
+        raise ValueError("Source is required.")
+
+    db = get_vector_db()
+    matches = db.get(where={"source": source}, include=[])
+    ids = matches.get("ids") or []
+
+    if not ids:
+        raise ValueError("Indexed source not found.")
+
+    db.delete(ids=ids)
+    db.persist()
+
+    return {"deleted_count": len(ids), "source": source}
+
+
 def get_answer(query: str):
     db = get_vector_db()
     llm = ChatGroq(
