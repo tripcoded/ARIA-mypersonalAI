@@ -82,6 +82,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   const [listeningState, setListeningState] = useState("Voice standby");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [logoAnimating, setLogoAnimating] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const sendMessageRef = useRef<(message: string) => Promise<void>>(async () => {});
@@ -228,7 +229,27 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     utterance.rate = 0.85; // Slower speech rate for natural sweetness
     utterance.volume = 1;
     
+    // Track when speech starts and ends
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+    
     window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeech = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
   };
 
   const sendMessage = async (message: string) => {
@@ -369,6 +390,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
               {voiceReplyEnabled ? "Voice Replies On" : "Voice Replies Off"}
             </Chip>
             <Chip>{loading ? "Thinking" : "Ready"}</Chip>
+            {isSpeaking && <Chip active={true}>Speaking</Chip>}
           </div>
         </div>
 
@@ -479,9 +501,23 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
             <InlineControl active={voiceActive} disabled={!voiceSupported} onClick={toggleVoiceMode}>
               {voiceActive ? "Voice Chat On" : "Voice Chat Off"}
             </InlineControl>
-            <InlineControl active={voiceReplyEnabled} onClick={() => setVoiceReplyEnabled((prev) => !prev)}>
+            <InlineControl active={voiceReplyEnabled} onClick={() => {
+              setVoiceReplyEnabled((prev) => !prev);
+              if (voiceReplyEnabled) {
+                stopSpeech();
+              }
+            }}>
               {voiceReplyEnabled ? "Voice Reply On" : "Voice Reply Off"}
             </InlineControl>
+            {isSpeaking && (
+              <button
+                type="button"
+                onClick={stopSpeech}
+                className="rounded-[8px] bg-red-600/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-red-400 transition hover:bg-red-600/40"
+              >
+                Stop Speaking
+              </button>
+            )}
             <span className="text-xs text-slate-500">{listeningState}</span>
           </div>
 
