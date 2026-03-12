@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
+import AriaLogo from "@/AriaLogo.png";
 import ChatArea from "@/components/ChatArea";
 import IngestionPanel from "@/components/IngestionPanel";
 import { API_BASE_URL, KnowledgeSource, KnowledgeStats } from "@/lib/api";
@@ -87,8 +89,13 @@ export default function Home() {
         <header className="mb-6 rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.82)] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur xl:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.16)] text-lg font-bold tracking-[0.18em] text-[var(--primary-light)] shadow-[0_0_18px_rgba(127,13,242,0.25)]">
-                A
+              <div className="flex h-11 w-11 items-center justify-center text-[var(--primary-light)]">
+                <Image
+                  src={AriaLogo}
+                  alt="Aria Logo"
+                  width={44}
+                  height={44}
+                />
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">Aria</p>

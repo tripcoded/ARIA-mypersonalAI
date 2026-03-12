@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import { API_BASE_URL } from "@/lib/api";
+import Image from "next/image"
+import AriaLogo from "@/AriaLogo.png"
 
 type Message = {
   role: "user" | "aria";
@@ -294,17 +296,20 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
       <div className="mx-auto flex min-h-[760px] w-full max-w-3xl flex-col">
         <div className="flex flex-col items-center px-2 pb-6 pt-6 text-center">
-          <button type="button" onClick={triggerLogoWobble} className="relative border-none bg-transparent p-0">
-            <div
-              className={`flex h-28 w-28 items-center justify-center rounded-[28px] border border-[rgba(127,13,242,0.34)] bg-[linear-gradient(135deg,rgba(127,13,242,0.18),rgba(14,10,28,0.84))] shadow-[0_0_32px_rgba(127,13,242,0.28)] ${
-                logoAnimating ? "animate-wobble" : "animate-continuous-wobble"
-              }`}
-            >
-              <span className="bg-gradient-to-r from-white via-[var(--primary-light)] to-[var(--primary)] bg-clip-text text-6xl font-bold tracking-[0.16em] text-transparent">
-                A
-              </span>
-            </div>
-            <div className="absolute left-1/2 top-[94px] h-5 w-24 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(180,120,255,0.7),rgba(127,13,242,0.16),transparent_72%)] blur-md" />
+          <button
+            type="button"
+            onClick={triggerLogoWobble}
+            className="relative border-none bg-transparent p-0"
+          >
+            <Image
+              src={AriaLogo}
+              alt="Aria Logo"
+              width={200}
+              height={200}
+              className={`${logoAnimating ? "animate-wobble" : ""} drop-shadow-[0_0_25px_rgba(168,85,247,0.6)]`}
+            />
+
+            <div className="absolute left-1/2 top-[120px] h-5 w-24 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(180,120,255,0.7),rgba(127,13,242,0.16),transparent_72%)] blur-md" />
           </button>
 
           <h1 className="mt-10 text-5xl font-semibold tracking-tight text-white md:text-6xl">Aria</h1>
