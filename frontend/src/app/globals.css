@@ -1,16 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #05050a;
-  --foreground: #ececf4;
-  --panel: rgba(18, 14, 30, 0.74);
-  --panel-soft: rgba(22, 17, 38, 0.58);
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(155, 92, 255, 0.26);
+  --background: #06060b;
+  --foreground: #f2f2f7;
   --primary: #7f0df2;
   --primary-light: #9b4df5;
   --primary-dark: #5a09ab;
-  --muted: #9091a5;
 }
 
 * {
@@ -27,19 +22,24 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   color: var(--foreground);
-  font-family: var(--font-body, "Manrope", "Segoe UI", sans-serif);
+  font-family:
+    "Manrope",
+    "Segoe UI",
+    sans-serif;
   background:
-    radial-gradient(circle at 18% 18%, rgba(127, 13, 242, 0.14), transparent 20%),
-    radial-gradient(circle at 82% 70%, rgba(90, 9, 171, 0.16), transparent 24%),
-    radial-gradient(circle at 55% 55%, rgba(35, 47, 122, 0.12), transparent 18%),
-    linear-gradient(180deg, #05050a 0%, #070711 42%, #040408 100%);
+    radial-gradient(circle at 15% 15%, rgba(127, 13, 242, 0.12), transparent 20%),
+    radial-gradient(circle at 80% 70%, rgba(90, 9, 171, 0.14), transparent 25%),
+    linear-gradient(180deg, #06060b 0%, #080812 45%, #040408 100%);
 }
 
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display, "Space Grotesk", "Aptos", sans-serif);
+  font-family:
+    "Space Grotesk",
+    "Segoe UI",
+    sans-serif;
 }
 
 button,
@@ -48,77 +48,8 @@ input {
 }
 
 *::selection {
-  background: rgba(127, 13, 242, 0.32);
+  background: rgba(127, 13, 242, 0.28);
   color: #fff;
-}
-
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -2;
-}
-
-body::before {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 120px 120px;
-  opacity: 0.22;
-  mask-image: radial-gradient(circle at center, black 24%, transparent 88%);
-}
-
-body::after {
-  inset: auto 10% 8% 25%;
-  height: 340px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(127, 13, 242, 0.18), transparent 66%);
-  filter: blur(80px);
-}
-
-.aria-shell {
-  position: relative;
-  isolation: isolate;
-}
-
-.glass-panel {
-  background: linear-gradient(180deg, rgba(17, 13, 29, 0.78), rgba(9, 8, 18, 0.9));
-  border: 1px solid var(--line);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px);
-}
-
-.glass-panel-soft {
-  background: linear-gradient(180deg, rgba(20, 15, 35, 0.68), rgba(10, 9, 20, 0.84));
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(16px);
-}
-
-.holo-border {
-  position: relative;
-}
-
-.holo-border::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: inherit;
-  border: 1px solid rgba(127, 13, 242, 0.16);
-  pointer-events: none;
-}
-
-.bg-shape {
-  position: absolute;
-  filter: blur(80px);
-  opacity: 0.16;
-  pointer-events: none;
 }
 
 .soft-scroll::-webkit-scrollbar {
@@ -135,7 +66,7 @@ body::after {
 }
 
 .soft-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(127, 13, 242, 0.7);
+  background: rgba(127, 13, 242, 0.8);
 }
 
 .line-clamp-4 {
@@ -143,19 +74,6 @@ body::after {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-@keyframes pulse-field {
-  0%,
-  100% {
-    transform: scale(0.96);
-    opacity: 0.56;
-  }
-
-  50% {
-    transform: scale(1.04);
-    opacity: 1;
-  }
 }
 
 @keyframes wobble {
@@ -184,30 +102,15 @@ body::after {
   }
 
   25% {
-    transform: rotate(-2deg) scale(1.03);
+    transform: rotate(-2deg) scale(1.02);
   }
 
   50% {
-    transform: rotate(2deg) scale(0.98);
+    transform: rotate(2deg) scale(0.99);
   }
 
   75% {
     transform: rotate(-1deg) scale(1.01);
-  }
-}
-
-@keyframes logo-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 rgba(127, 13, 242, 0),
-      0 0 30px rgba(127, 13, 242, 0.28);
-  }
-
-  50% {
-    box-shadow:
-      0 0 12px rgba(155, 92, 255, 0.36),
-      0 0 48px rgba(127, 13, 242, 0.52);
   }
 }
 
@@ -217,12 +120,4 @@ body::after {
 
 .animate-continuous-wobble {
   animation: continuous-wobble 5s ease-in-out infinite;
-}
-
-.animate-logo-pulse {
-  animation: logo-pulse 3.8s ease-in-out infinite;
-}
-
-.animate-pulse-field {
-  animation: pulse-field 10s ease-in-out infinite;
 }

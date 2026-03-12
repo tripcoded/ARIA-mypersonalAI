@@ -97,13 +97,12 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
   };
 
   return (
-    <section className="glass-panel-soft rounded-[28px] p-6">
+    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
       <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
       <div className="mt-5 space-y-4">
-        <IngestCard
+        <Card
           title="Upload PDF"
-          subtitle={pdfFile ? pdfFile.name : "Add a PDF to Aria memory"}
-          actionLabel={loading === "pdf" ? "Uploading..." : "Upload"}
+          actionLabel={loading === "pdf" ? "Uploading..." : "Upload PDF"}
           onAction={handlePdfUpload}
           disabled={loading !== null}
         >
@@ -113,12 +112,11 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
             onChange={(event) => setPdfFile(event.target.files?.[0] || null)}
             className="w-full rounded-2xl border border-white/8 bg-black/20 px-3 py-3 text-sm text-slate-300 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-[rgba(127,13,242,0.18)] file:px-3 file:py-2 file:text-[var(--primary-light)]"
           />
-        </IngestCard>
+        </Card>
 
-        <IngestCard
+        <Card
           title="Paste GitHub Repo Link"
-          subtitle="Sync code context into the workspace"
-          actionLabel={loading === "github" ? "Syncing..." : "Sync Repo"}
+          actionLabel={loading === "github" ? "Sync Repo" : "Sync Repo"}
           onAction={handleGithubIngest}
           disabled={loading !== null}
         >
@@ -127,30 +125,28 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
             placeholder="https://github.com/user/repo"
             value={githubUrl}
             onChange={(event) => setGithubUrl(event.target.value)}
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[var(--line-strong)]"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[rgba(127,13,242,0.34)]"
           />
-        </IngestCard>
+        </Card>
 
-        <IngestCard
+        <Card
           title="YouTube Videos"
-          subtitle="Transcript indexing for long-form video context"
           actionLabel={loading === "youtube" ? "Indexing..." : "Index Video"}
           onAction={handleYoutubeIngest}
           disabled={loading !== null}
-          muted
         >
           <input
             type="text"
             placeholder="https://youtube.com/watch?v=..."
             value={youtubeUrl}
             onChange={(event) => setYoutubeUrl(event.target.value)}
-            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[var(--line-strong)]"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[rgba(127,13,242,0.34)]"
           />
-        </IngestCard>
+        </Card>
       </div>
 
       {status ? (
-        <div className="mt-5 rounded-[18px] border border-[var(--line-strong)] bg-[rgba(127,13,242,0.12)] p-3 text-sm text-slate-200">
+        <div className="mt-5 rounded-[18px] border border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.12)] p-3 text-sm text-slate-200">
           {status}
         </div>
       ) : null}
@@ -158,39 +154,28 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
   );
 }
 
-function IngestCard({
+function Card({
   title,
-  subtitle,
   actionLabel,
   onAction,
   disabled,
-  muted,
   children,
 }: {
   title: string;
-  subtitle: string;
   actionLabel: string;
   onAction: () => void;
   disabled?: boolean;
-  muted?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/4 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className={`text-lg font-semibold ${muted ? "text-slate-300" : "text-white"}`}>
-            {title}
-          </p>
-          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
-        </div>
-      </div>
+    <div className="rounded-[18px] border border-white/8 bg-white/4 p-4">
+      <p className="text-lg font-semibold text-white">{title}</p>
       <div className="mt-4">{children}</div>
       <button
         type="button"
         onClick={onAction}
         disabled={disabled}
-        className="mt-4 w-full rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--primary-light))] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-700"
+        className="mt-4 w-full rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--primary-light))] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {actionLabel}
       </button>

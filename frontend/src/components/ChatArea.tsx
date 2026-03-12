@@ -291,168 +291,152 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   };
 
   return (
-    <section className="glass-panel holo-border relative min-h-[780px] overflow-hidden rounded-[32px] px-4 py-6 md:px-6">
-      <div className="bg-shape left-[-8%] top-[12%] h-64 w-64 rounded-full bg-[var(--primary)]" />
-      <div className="bg-shape bottom-[-8%] right-[-5%] h-72 w-72 rounded-full bg-[var(--primary-dark)]" />
-      <div className="bg-shape left-[48%] top-[48%] h-56 w-56 rounded-full bg-blue-700/20" />
+    <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
+      <div className="mx-auto flex min-h-[760px] w-full max-w-3xl flex-col">
+        <div className="flex flex-col items-center px-2 pb-6 pt-6 text-center">
+          <button type="button" onClick={triggerLogoWobble} className="relative border-none bg-transparent p-0">
+            <div
+              className={`flex h-28 w-28 items-center justify-center rounded-[28px] border border-[rgba(127,13,242,0.34)] bg-[linear-gradient(135deg,rgba(127,13,242,0.18),rgba(14,10,28,0.84))] shadow-[0_0_32px_rgba(127,13,242,0.28)] ${
+                logoAnimating ? "animate-wobble" : "animate-continuous-wobble"
+              }`}
+            >
+              <span className="bg-gradient-to-r from-white via-[var(--primary-light)] to-[var(--primary)] bg-clip-text text-6xl font-bold tracking-[0.16em] text-transparent">
+                A
+              </span>
+            </div>
+            <div className="absolute left-1/2 top-[94px] h-5 w-24 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(180,120,255,0.7),rgba(127,13,242,0.16),transparent_72%)] blur-md" />
+          </button>
 
-      <div className="relative flex min-h-[728px] flex-col">
-        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
-          <div className="flex flex-col items-center px-2 pb-6 pt-10 text-center">
-            <button
-              id="hero-logo"
-              type="button"
-              onClick={triggerLogoWobble}
-              className="group relative border-none bg-transparent p-0 text-center"
+          <h1 className="mt-10 text-5xl font-semibold tracking-tight text-white md:text-6xl">Aria</h1>
+          <p className="mt-3 text-sm uppercase tracking-[0.4em] text-slate-400">
+            Personal AI Brain
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+            <Chip active={voiceActive}>{voiceActive ? "Voice Live" : "Voice Standby"}</Chip>
+            <Chip active={voiceReplyEnabled}>
+              {voiceReplyEnabled ? "Voice Replies On" : "Voice Replies Off"}
+            </Chip>
+            <Chip>{loading ? "Thinking" : "Ready"}</Chip>
+          </div>
+        </div>
+
+        <div className="soft-scroll flex-1 space-y-6 overflow-y-auto px-1 pb-6">
+          {messages.map((msg, index) => (
+            <div
+              key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
+              className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
             >
               <div
-                className={`animate-logo-pulse flex h-28 w-28 items-center justify-center rounded-[28px] border border-[var(--line-strong)] bg-[linear-gradient(135deg,rgba(127,13,242,0.2),rgba(14,10,28,0.8))] shadow-[0_0_40px_rgba(127,13,242,0.32)] ${
-                  logoAnimating ? "animate-wobble" : "animate-continuous-wobble"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${
+                  msg.role === "user"
+                    ? "border-white/10 bg-zinc-900 text-xs font-bold text-slate-300"
+                    : "border-[rgba(127,13,242,0.34)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.28)]"
                 }`}
               >
-                <span className="bg-gradient-to-r from-white via-[var(--primary-light)] to-[var(--primary)] bg-clip-text text-6xl font-bold tracking-[0.16em] text-transparent">
-                  A
-                </span>
+                {msg.role === "user" ? "ME" : "A"}
               </div>
-              <div className="animate-pulse-field absolute left-1/2 top-[92px] h-6 w-24 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(180,120,255,0.75),rgba(127,13,242,0.18),transparent_72%)] blur-md" />
-            </button>
 
-            <h1 className="mt-10 text-5xl font-semibold tracking-tight text-white md:text-6xl">
-              Aria
-            </h1>
-            <p className="mt-3 text-sm uppercase tracking-[0.42em] text-slate-400">
-              Personal AI Brain
-            </p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-              <Chip active={voiceActive}>{voiceActive ? "Voice Live" : "Voice Standby"}</Chip>
-              <Chip active={voiceReplyEnabled}>
-                {voiceReplyEnabled ? "Voice Replies On" : "Voice Replies Off"}
-              </Chip>
-              <Chip>{loading ? "Thinking" : "Ready"}</Chip>
-            </div>
-          </div>
-
-          <div className="soft-scroll flex-1 space-y-6 overflow-y-auto px-1 pb-6">
-            {messages.map((msg, index) => (
-              <div
-                key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
-                className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+              <article
+                className={`max-w-[88%] flex-1 rounded-[20px] border p-4 ${
+                  msg.role === "user"
+                    ? "border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.14)]"
+                    : "border-white/8 bg-white/4"
+                }`}
               >
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${
-                    msg.role === "user"
-                      ? "border-white/10 bg-zinc-900 text-xs font-bold text-slate-300"
-                      : "border-[var(--line-strong)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.3)]"
-                  }`}
-                >
-                  {msg.role === "user" ? "ME" : "A"}
+                <div className="space-y-2 text-sm leading-7 text-slate-100">
+                  {formatBlocks(msg.content).map((line, lineIndex) => (
+                    <p key={lineIndex}>{line}</p>
+                  ))}
                 </div>
+                {msg.sources?.length ? (
+                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-500">
+                    Sources: {msg.sources.join(", ")}
+                  </p>
+                ) : null}
+              </article>
+            </div>
+          ))}
 
-                <article
-                  className={`max-w-[88%] flex-1 rounded-[22px] border p-4 ${
-                    msg.role === "user"
-                      ? "border-[rgba(127,13,242,0.3)] bg-[rgba(127,13,242,0.16)]"
-                      : "glass-panel-soft"
-                  }`}
-                >
-                  <div className="space-y-2 text-sm leading-7 text-slate-100">
-                    {formatBlocks(msg.content).map((line, lineIndex) => (
-                      <p key={lineIndex}>{line}</p>
-                    ))}
-                  </div>
-                  {msg.sources?.length ? (
-                    <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-500">
-                      Sources: {msg.sources.join(", ")}
-                    </p>
-                  ) : null}
-                </article>
+          {loading ? (
+            <div className="flex gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[rgba(127,13,242,0.34)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.28)]">
+                A
               </div>
-            ))}
-
-            {loading ? (
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--line-strong)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.3)]">
-                  A
-                </div>
-                <div className="glass-panel-soft rounded-[22px] border p-4 text-sm text-slate-300">
-                  Aria is generating a response...
-                </div>
-              </div>
-            ) : null}
-
-            {interimTranscript ? (
-              <div className="rounded-[18px] border border-[var(--line-strong)] bg-[rgba(127,13,242,0.1)] px-4 py-3 text-sm text-slate-200">
-                Heard: {interimTranscript}
-              </div>
-            ) : null}
-
-            <div ref={scrollRef} />
-          </div>
-
-          <div className="mt-auto px-1 pt-2">
-            <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,12,27,0.88),rgba(10,9,18,0.96))] p-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-white/5 hover:text-[var(--primary-light)]"
-                  title="Attach file"
-                >
-                  <PaperclipIcon />
-                </button>
-
-                <input
-                  type="text"
-                  placeholder="Ask Aria anything..."
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      void sendMessage(input);
-                    }
-                  }}
-                  className="min-w-0 flex-1 bg-transparent px-2 py-3 text-base text-white outline-none placeholder:text-slate-500"
-                />
-
-                <button
-                  type="button"
-                  onClick={voiceSupported ? handlePushToTalk : undefined}
-                  className="flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  title="Voice input"
-                  disabled={!voiceSupported}
-                >
-                  <MicIcon />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => void sendMessage(input)}
-                  disabled={loading}
-                  className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,var(--primary),var(--primary-light))] text-white shadow-[0_0_22px_rgba(127,13,242,0.4)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                  title="Send"
-                >
-                  <ArrowRightIcon />
-                </button>
+              <div className="rounded-[20px] border border-white/8 bg-white/4 p-4 text-sm text-slate-300">
+                Aria is generating a response...
               </div>
             </div>
+          ) : null}
 
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <InlineControl
-                active={voiceActive}
+          {interimTranscript ? (
+            <div className="rounded-[18px] border border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.1)] px-4 py-3 text-sm text-slate-200">
+              Heard: {interimTranscript}
+            </div>
+          ) : null}
+
+          <div ref={scrollRef} />
+        </div>
+
+        <div className="mt-auto px-1 pt-2">
+          <div className="rounded-[22px] border border-white/10 bg-[rgba(14,11,24,0.92)] p-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-white/5 hover:text-[var(--primary-light)]"
+                title="Attach file"
+              >
+                <PaperclipIcon />
+              </button>
+
+              <input
+                type="text"
+                placeholder="Ask Aria anything..."
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    void sendMessage(input);
+                  }
+                }}
+                className="min-w-0 flex-1 bg-transparent px-2 py-3 text-base text-white outline-none placeholder:text-slate-500"
+              />
+
+              <button
+                type="button"
+                onClick={voiceSupported ? handlePushToTalk : undefined}
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                title="Voice input"
                 disabled={!voiceSupported}
-                onClick={toggleVoiceMode}
               >
-                {voiceActive ? "Voice Chat On" : "Voice Chat Off"}
-              </InlineControl>
-              <InlineControl active={voiceReplyEnabled} onClick={() => setVoiceReplyEnabled((prev) => !prev)}>
-                {voiceReplyEnabled ? "Voice Reply On" : "Voice Reply Off"}
-              </InlineControl>
-              <span className="text-xs text-slate-500">{listeningState}</span>
-            </div>
+                <MicIcon />
+              </button>
 
-            <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-[0.32em] text-slate-600">
-              Aria can make mistakes. Verify important information.
-            </p>
+              <button
+                type="button"
+                onClick={() => void sendMessage(input)}
+                disabled={loading}
+                className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,var(--primary),var(--primary-light))] text-white shadow-[0_0_22px_rgba(127,13,242,0.34)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Send"
+              >
+                <ArrowRightIcon />
+              </button>
+            </div>
           </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <InlineControl active={voiceActive} disabled={!voiceSupported} onClick={toggleVoiceMode}>
+              {voiceActive ? "Voice Chat On" : "Voice Chat Off"}
+            </InlineControl>
+            <InlineControl active={voiceReplyEnabled} onClick={() => setVoiceReplyEnabled((prev) => !prev)}>
+              {voiceReplyEnabled ? "Voice Reply On" : "Voice Reply Off"}
+            </InlineControl>
+            <span className="text-xs text-slate-500">{listeningState}</span>
+          </div>
+
+          <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
+            Aria can make mistakes. Verify important information.
+          </p>
         </div>
       </div>
     </section>
@@ -470,7 +454,7 @@ function Chip({
     <span
       className={`rounded-full border px-3 py-1 ${
         active
-          ? "border-[var(--line-strong)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
+          ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
           : "border-white/10 bg-white/5 text-slate-400"
       }`}
     >
@@ -497,7 +481,7 @@ function InlineControl({
       disabled={disabled}
       className={`rounded-full border px-3 py-1 text-xs transition ${
         active
-          ? "border-[var(--line-strong)] bg-[rgba(127,13,242,0.16)] text-[var(--primary-light)]"
+          ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
           : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/8"
       } disabled:cursor-not-allowed disabled:opacity-40`}
     >
