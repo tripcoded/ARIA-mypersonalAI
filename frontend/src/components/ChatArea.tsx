@@ -88,10 +88,47 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   const voiceActiveRef = useRef(false);
   const autoSubmitRef = useRef(false);
   const recognitionRunningRef = useRef(false);
+  const femaleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, interimTranscript, loading]);
+
+  // Load available voices and find female voice
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Prioritize English female voices
+        const femaleVoice = voices.find(voice =>
+          voice.lang.startsWith("en") &&
+          (voice.name.toLowerCase().includes("female") ||
+            voice.name.toLowerCase().includes("woman") ||
+            voice.name.toLowerCase().includes("samantha") ||
+            voice.name.toLowerCase().includes("victoria") ||
+            voice.name.toLowerCase().includes("karen") ||
+            voice.name.toLowerCase().includes("zira") ||
+            voice.name.toLowerCase().includes("moira"))
+        ) || voices.find(voice => voice.lang.startsWith("en"));
+
+        if (femaleVoice) {
+          femaleVoiceRef.current = femaleVoice;
+        }
+      }
+    };
+
+    // Load voices immediately and on voices changed
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -180,8 +217,17 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1;
-    utterance.pitch = 1.04;
+    
+    // Use the pre-loaded female voice
+    if (femaleVoiceRef.current) {
+      utterance.voice = femaleVoiceRef.current;
+    }
+    
+    // Very aggressive feminization settings
+    utterance.pitch = 2.5; // Much higher pitch for sweet female voice
+    utterance.rate = 0.85; // Slower speech rate for natural sweetness
+    utterance.volume = 1;
+    
     window.speechSynthesis.speak(utterance);
   };
 
