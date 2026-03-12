@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import ChatArea from "@/components/ChatArea";
 import IngestionPanel from "@/components/IngestionPanel";
-import { API_BASE_URL, KnowledgeStats } from "@/lib/api";
+import { API_BASE_URL, KnowledgeSource, KnowledgeStats } from "@/lib/api";
 
 const emptyStats: KnowledgeStats = {
   chunk_count: 0,
@@ -64,119 +64,208 @@ export default function Home() {
     }
   };
 
+  const activeContexts = useMemo(() => {
+    const contexts = new Set<string>();
+
+    if (stats.sources.some((source) => source.source_type.toLowerCase().includes("pdf"))) {
+      contexts.add("Documents");
+    }
+    if (stats.sources.some((source) => source.source_type.toLowerCase().includes("github"))) {
+      contexts.add("Code");
+    }
+    if (stats.sources.some((source) => source.source_type.toLowerCase().includes("youtube"))) {
+      contexts.add("Media");
+    }
+    contexts.add("Current Goals");
+
+    return [...contexts].slice(0, 4);
+  }, [stats.sources]);
+
   return (
-    <main className="flex h-screen flex-col text-slate-100 selection:bg-blue-400/30">
-      <div className="overflow-y-auto px-4 py-6 md:px-6 lg:px-8">
-        <div className="mx-auto max-w-[1540px]">
-          <header className="overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(18,25,43,0.92),rgba(10,15,28,0.96))] shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
-            <div className="grid gap-6 px-6 py-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
-              <div className="flex items-start gap-5">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(180deg,#76acff,#4d7ef0)] text-3xl font-semibold text-slate-950 shadow-[0_12px_35px_rgba(77,126,240,0.3)]">
+    <main className="aria-shell min-h-screen px-4 pb-6 pt-4 text-slate-100 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1680px]">
+        <header className="glass-panel holo-border sticky top-4 z-20 mb-6 overflow-hidden rounded-[28px] px-5 py-4 md:px-8">
+          <div className="bg-shape left-[-8%] top-[-35%] h-48 w-48 rounded-full bg-[var(--primary)]" />
+          <div className="bg-shape right-[10%] top-[-25%] h-36 w-36 rounded-full bg-[var(--primary-dark)]" />
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--line-strong)] bg-[linear-gradient(135deg,rgba(127,13,242,0.35),rgba(56,18,112,0.16))] shadow-[0_0_24px_rgba(127,13,242,0.35)]">
+                <span className="text-lg font-bold tracking-[0.18em] text-[var(--primary-light)]">
                   A
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.42em] text-blue-200/70">
-                    Project ARIA
-                  </p>
-                  <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                    Voice-first AI knowledge workspace
-                  </h1>
-                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
-                    Search your documents, repositories, and transcripts through one chat surface.
-                    The interface is rebuilt around the real workflow: ingest on the left, talk in
-                    the center, inspect retrieved context on the right.
-                  </p>
-                </div>
+                </span>
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                <StatCard label="Chunks Indexed" value={stats.chunk_count} accent="text-blue-300" />
-                <StatCard label="Sources" value={stats.source_count} accent="text-emerald-300" />
-                <StatCard
-                  label="Source Types"
-                  value={Object.keys(stats.source_types).length}
-                  accent="text-cyan-300"
-                />
+              <div>
+                <p className="text-sm font-semibold text-white">Aria</p>
+                <p className="text-[10px] uppercase tracking-[0.34em] text-slate-500">
+                  Personal AI Brain
+                </p>
               </div>
             </div>
-          </header>
 
-          <div className="mt-6 mb-6">
-            <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-              <aside className="sticky top-0 h-fit space-y-6">
-                <IngestionPanel onKnowledgeChange={refreshKnowledge} />
-
-                <section className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,24,40,0.88),rgba(12,18,31,0.84))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)] max-h-[60vh] overflow-y-auto">
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-blue-200/65">
-                    Knowledge Ledger
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">Indexed sources</h2>
-                  {statsError ? (
-                    <p className="mt-4 rounded-2xl border border-rose-400/25 bg-rose-400/10 p-4 text-sm text-rose-200">
-                      {statsError}
-                    </p>
-                  ) : null}
-                  <div className="mt-5 space-y-3">
-                    {stats.sources.length ? (
-                      stats.sources.map((source) => (
-                        <div
-                          key={`${source.source}-${source.ingested_at ?? "unknown"}`}
-                          className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="rounded-full bg-blue-400/15 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-blue-200">
-                              {source.source_type}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              {source.ingested_at
-                                ? new Date(source.ingested_at).toLocaleDateString()
-                                : "Unknown date"}
-                            </span>
-                          </div>
-                          <p className="mt-3 text-sm text-slate-200">{source.source}</p>
-                          <button
-                            type="button"
-                            onClick={() => void handleDeleteSource(source.source)}
-                            disabled={deletingSource === source.source}
-                            className="mt-4 inline-flex rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs font-medium uppercase tracking-[0.18em] text-rose-200 transition hover:bg-rose-400/20 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {deletingSource === source.source ? "Deleting..." : "Delete"}
-                          </button>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-500">
-                        No knowledge indexed yet. Start with a PDF, repo, or transcript.
-                      </p>
-                    )}
-                  </div>
-                </section>
-              </aside>
-
-              <section>
-                <ChatArea onKnowledgeChange={refreshKnowledge} />
-              </section>
-            </div>
+            <nav className="hidden items-center gap-10 text-sm text-slate-400 md:flex">
+              <span className="font-medium text-slate-200">Workspace</span>
+              <span className="transition hover:text-white">Memories</span>
+              <span className="transition hover:text-white">Settings</span>
+            </nav>
           </div>
+        </header>
+
+        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_320px]">
+          <aside className="space-y-6">
+            <IngestionPanel onKnowledgeChange={refreshKnowledge} />
+            <RecentSourcesCard sources={stats.sources} />
+          </aside>
+
+          <section className="min-w-0">
+            <ChatArea onKnowledgeChange={refreshKnowledge} />
+          </section>
+
+          <aside className="space-y-6">
+            <ContextExplorerCard stats={stats} activeContexts={activeContexts} />
+            <IndexedHistoryCard
+              deletingSource={deletingSource}
+              error={statsError}
+              onDeleteSource={handleDeleteSource}
+              sources={stats.sources}
+            />
+          </aside>
         </div>
       </div>
     </main>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  accent,
+function RecentSourcesCard({ sources }: { sources: KnowledgeSource[] }) {
+  return (
+    <section className="glass-panel-soft rounded-[28px] p-6">
+      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Recents</p>
+      <div className="mt-5 space-y-4">
+        {sources.length ? (
+          sources.slice(0, 3).map((source) => (
+            <div key={`${source.source}-${source.ingested_at ?? "unknown"}`} className="text-slate-300">
+              <p className="truncate text-base font-medium text-slate-100">{source.source}</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                {source.source_type}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-slate-500">No indexed sources yet.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ContextExplorerCard({
+  stats,
+  activeContexts,
 }: {
-  label: string;
-  value: number;
-  accent: string;
+  stats: KnowledgeStats;
+  activeContexts: string[];
 }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 shadow-[0_12px_24px_rgba(0,0,0,0.16)]">
-      <div className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</div>
-      <div className={`mt-2 text-2xl font-semibold ${accent}`}>{value}</div>
-    </div>
+    <section className="glass-panel-soft rounded-[28px] p-6">
+      <h2 className="text-2xl font-semibold text-white">Context Explorer</h2>
+      <div className="mt-5 space-y-4">
+        <div className="rounded-[20px] border border-white/8 bg-white/5 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--primary-light)]">
+            Active Memory
+          </p>
+          <p className="mt-2 text-sm text-slate-300">
+            Project: Aria knowledge workspace v{Math.max(stats.source_count, 1)}.0
+          </p>
+        </div>
+        <div className="rounded-[20px] border border-white/8 bg-white/5 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--primary-light)]">
+            System Health
+          </p>
+          <div className="mt-2 flex items-center gap-2 text-sm text-slate-300">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            All modules synchronized
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Active Contexts
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {activeContexts.map((context) => (
+            <span
+              key={context}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                context === "Current Goals"
+                  ? "border-[var(--line-strong)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
+                  : "border-white/10 bg-white/5 text-slate-400"
+              }`}
+            >
+              {context}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function IndexedHistoryCard({
+  sources,
+  deletingSource,
+  onDeleteSource,
+  error,
+}: {
+  sources: KnowledgeSource[];
+  deletingSource: string;
+  onDeleteSource: (source: string) => void;
+  error: string;
+}) {
+  return (
+    <section className="glass-panel-soft rounded-[28px] p-6">
+      <h2 className="text-2xl font-semibold text-white">Indexed History</h2>
+      {error ? (
+        <p className="mt-4 rounded-[18px] border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-rose-200">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="soft-scroll mt-5 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+        {sources.length ? (
+          sources.map((source) => (
+            <div
+              key={`${source.source}-${source.ingested_at ?? "unknown"}`}
+              className="rounded-[20px] border border-white/8 bg-white/4 p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-100">{source.source}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {source.ingested_at
+                      ? new Date(source.ingested_at).toLocaleString()
+                      : source.source_type}
+                  </p>
+                </div>
+                <span className="rounded-xl bg-white/6 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                  {source.source_type}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onDeleteSource(source.source)}
+                disabled={deletingSource === source.source}
+                className="mt-3 rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-300 transition hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingSource === source.source ? "Removing..." : "Remove"}
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-[20px] border border-dashed border-white/10 bg-white/4 p-4 text-sm text-slate-500">
+            No indexed history available yet.
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
