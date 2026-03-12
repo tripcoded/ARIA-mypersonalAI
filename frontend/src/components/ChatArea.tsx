@@ -10,12 +10,6 @@ type Message = {
   sources?: string[];
 };
 
-type SearchResult = {
-  content: string;
-  source: string;
-  score: number;
-};
-
 type Props = {
   onKnowledgeChange: () => Promise<void> | void;
 };
@@ -62,26 +56,6 @@ declare global {
 }
 
 const WAKE_PHRASE = "hey aria";
-const FEMALE_VOICE_HINTS = [
-  "female",
-  "woman",
-  "zira",
-  "susan",
-  "aria",
-  "samantha",
-  "victoria",
-  "karen",
-  "moira",
-  "tessa",
-  "veena",
-  "fiona",
-  "ava",
-  "allison",
-  "joanna",
-  "kendra",
-  "serena",
-  "sonia",
-];
 
 function formatBlocks(text: string) {
   return text
@@ -95,7 +69,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     {
       role: "aria",
       content:
-        "ARIA is ready. Ask about anything from your indexed files, repositories, and transcripts.",
+        "Hello! I'm Aria, your personal AI brain. I've indexed your synced knowledge sources. How can I assist you in achieving your goals today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -103,45 +77,15 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
   const [voiceReplyEnabled, setVoiceReplyEnabled] = useState(true);
-  const [preferredVoice, setPreferredVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [listeningState, setListeningState] = useState("Voice standby");
   const [interimTranscript, setInterimTranscript] = useState("");
-  const [semanticResults, setSemanticResults] = useState<SearchResult[]>([]);
+  const [logoAnimating, setLogoAnimating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const sendMessageRef = useRef<(message: string) => Promise<void>>(async () => {});
   const voiceActiveRef = useRef(false);
   const autoSubmitRef = useRef(false);
   const recognitionRunningRef = useRef(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      return;
-    }
-
-    const pickPreferredVoice = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (!voices.length) {
-        return;
-      }
-
-      const femaleVoice =
-        voices.find((voice) =>
-          FEMALE_VOICE_HINTS.some((hint) => voice.name.toLowerCase().includes(hint)),
-        ) ??
-        voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ??
-        voices[0];
-
-      setPreferredVoice(femaleVoice);
-    };
-
-    pickPreferredVoice();
-    window.speechSynthesis.onvoiceschanged = pickPreferredVoice;
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -221,7 +165,9 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
       voiceActiveRef.current = false;
       recognitionRunningRef.current = false;
       recognition.stop();
-      window.speechSynthesis.cancel();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 
@@ -232,22 +178,9 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
     utterance.rate = 1;
-    utterance.pitch = 1.08;
+    utterance.pitch = 1.04;
     window.speechSynthesis.speak(utterance);
-  };
-
-  const toggleVoiceReplies = () => {
-    setVoiceReplyEnabled((prev) => {
-      const next = !prev;
-      if (!next && typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      return next;
-    });
   };
 
   const sendMessage = async (message: string) => {
@@ -258,10 +191,9 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     }
 
     setInput("");
-    setSemanticResults([]);
     setMessages((prev) => [...prev, { role: "user", content: trimmedMessage }]);
     setLoading(true);
-    setListeningState(voiceActiveRef.current ? "ARIA is thinking..." : listeningState);
+    setListeningState(voiceActiveRef.current ? "Aria is thinking..." : listeningState);
 
     try {
       const res = await fetch(`${API_BASE_URL}/chat`, {
@@ -272,7 +204,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
       const data = (await res.json()) as { answer?: string; sources?: string[]; detail?: string };
 
       if (!res.ok) {
-        throw new Error(data.detail ?? "Unable to contact ARIA");
+        throw new Error(data.detail ?? "Unable to contact Aria");
       }
 
       const answer = data.answer ?? "I could not generate a response.";
@@ -314,6 +246,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     voiceActiveRef.current = true;
     setVoiceActive(true);
     setListeningState(`Listening for "${WAKE_PHRASE}"`);
+
     if (!recognitionRunningRef.current) {
       try {
         recognition.start();
@@ -343,6 +276,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
           return;
         }
       }
+
       window.setTimeout(() => {
         recognitionRunningRef.current = false;
         recognition.stop();
@@ -350,98 +284,114 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
     }
   };
 
+  const triggerLogoWobble = () => {
+    setLogoAnimating(false);
+    window.setTimeout(() => setLogoAnimating(true), 0);
+    window.setTimeout(() => setLogoAnimating(false), 650);
+  };
+
   return (
-    <div className="grid h-full gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <section className="flex min-h-[720px] flex-col overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,25,43,0.94),rgba(10,14,24,0.98))] shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
-        <div className="border-b border-white/10 px-6 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.4em] text-blue-200/65">
-                Conversation
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold text-white">
-                Chat with ARIA
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm text-slate-300">
-                Ask questions, inspect retrieved context, and use voice controls directly from the composer below.
-              </p>
+    <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
+      <div className="mx-auto flex min-h-[760px] w-full max-w-3xl flex-col">
+        <div className="flex flex-col items-center px-2 pb-6 pt-6 text-center">
+          <button type="button" onClick={triggerLogoWobble} className="relative border-none bg-transparent p-0">
+            <div
+              className={`flex h-28 w-28 items-center justify-center rounded-[28px] border border-[rgba(127,13,242,0.34)] bg-[linear-gradient(135deg,rgba(127,13,242,0.18),rgba(14,10,28,0.84))] shadow-[0_0_32px_rgba(127,13,242,0.28)] ${
+                logoAnimating ? "animate-wobble" : "animate-continuous-wobble"
+              }`}
+            >
+              <span className="bg-gradient-to-r from-white via-[var(--primary-light)] to-[var(--primary)] bg-clip-text text-6xl font-bold tracking-[0.16em] text-transparent">
+                A
+              </span>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-              {listeningState}
-            </div>
+            <div className="absolute left-1/2 top-[94px] h-5 w-24 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(180,120,255,0.7),rgba(127,13,242,0.16),transparent_72%)] blur-md" />
+          </button>
+
+          <h1 className="mt-10 text-5xl font-semibold tracking-tight text-white md:text-6xl">Aria</h1>
+          <p className="mt-3 text-sm uppercase tracking-[0.4em] text-slate-400">
+            Personal AI Brain
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+            <Chip active={voiceActive}>{voiceActive ? "Voice Live" : "Voice Standby"}</Chip>
+            <Chip active={voiceReplyEnabled}>
+              {voiceReplyEnabled ? "Voice Replies On" : "Voice Replies Off"}
+            </Chip>
+            <Chip>{loading ? "Thinking" : "Ready"}</Chip>
           </div>
+        </div>
+
+        <div className="soft-scroll flex-1 space-y-6 overflow-y-auto px-1 pb-6">
+          {messages.map((msg, index) => (
+            <div
+              key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
+              className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+            >
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${
+                  msg.role === "user"
+                    ? "border-white/10 bg-zinc-900 text-xs font-bold text-slate-300"
+                    : "border-[rgba(127,13,242,0.34)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.28)]"
+                }`}
+              >
+                {msg.role === "user" ? "ME" : "A"}
+              </div>
+
+              <article
+                className={`max-w-[88%] flex-1 rounded-[20px] border p-4 ${
+                  msg.role === "user"
+                    ? "border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.14)]"
+                    : "border-white/8 bg-white/4"
+                }`}
+              >
+                <div className="space-y-2 text-sm leading-7 text-slate-100">
+                  {formatBlocks(msg.content).map((line, lineIndex) => (
+                    <p key={lineIndex}>{line}</p>
+                  ))}
+                </div>
+                {msg.sources?.length ? (
+                  <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-500">
+                    Sources: {msg.sources.join(", ")}
+                  </p>
+                ) : null}
+              </article>
+            </div>
+          ))}
+
+          {loading ? (
+            <div className="flex gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[rgba(127,13,242,0.34)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.28)]">
+                A
+              </div>
+              <div className="rounded-[20px] border border-white/8 bg-white/4 p-4 text-sm text-slate-300">
+                Aria is generating a response...
+              </div>
+            </div>
+          ) : null}
+
           {interimTranscript ? (
-            <div className="mt-4 rounded-2xl border border-blue-300/20 bg-blue-400/10 px-4 py-3 text-sm text-blue-100">
+            <div className="rounded-[18px] border border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.1)] px-4 py-3 text-sm text-slate-200">
               Heard: {interimTranscript}
             </div>
           ) : null}
+
+          <div ref={scrollRef} />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          <div className="space-y-5">
-            {messages.map((msg, index) => (
-              <div
-                key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+        <div className="mt-auto px-1 pt-2">
+          <div className="rounded-[22px] border border-white/10 bg-[rgba(14,11,24,0.92)] p-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-white/5 hover:text-[var(--primary-light)]"
+                title="Attach file"
               >
-                <article
-                  className={`max-w-[86%] rounded-[26px] px-5 py-4 text-sm leading-7 ${
-                    msg.role === "user"
-                      ? "bg-[linear-gradient(180deg,#6ea8ff,#4f7df2)] text-slate-950 shadow-[0_12px_30px_rgba(79,125,242,0.25)]"
-                      : "border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.04))] text-slate-100 shadow-[0_12px_24px_rgba(0,0,0,0.16)]"
-                  }`}
-                >
-                  <div className="space-y-3">
-                    {formatBlocks(msg.content).map((line, lineIndex) => (
-                      <p key={lineIndex}>{line}</p>
-                    ))}
-                  </div>
-                  {msg.sources?.length ? (
-                    <div className="mt-4 border-t border-white/10 pt-3 text-xs text-slate-400">
-                      Sources: {msg.sources.join(", ")}
-                    </div>
-                  ) : null}
-                </article>
-              </div>
-            ))}
-            {loading ? (
-              <div className="flex justify-start">
-                <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-                  ARIA is generating a response...
-                </div>
-              </div>
-            ) : null}
-            <div ref={scrollRef} />
-          </div>
-        </div>
+                <PaperclipIcon />
+              </button>
 
-        <div className="border-t border-white/10 bg-[linear-gradient(180deg,rgba(12,18,31,0.96),rgba(7,11,20,0.98))] px-6 py-5">
-          <div className="rounded-[28px] border border-white/10 bg-black/20 p-4">
-            <div className="mb-3 flex flex-wrap gap-2">
-              <ControlButton
-                active={voiceActive}
-                disabled={!voiceSupported}
-                label={voiceActive ? "Voice Chat On" : "Voice Chat Off"}
-                onClick={toggleVoiceMode}
-                activeClassName="bg-emerald-400 text-slate-950 hover:bg-emerald-300"
-              />
-              <ControlButton
-                label="Push to Talk"
-                disabled={!voiceSupported}
-                onClick={handlePushToTalk}
-              />
-              <ControlButton
-                active={voiceReplyEnabled}
-                label={voiceReplyEnabled ? "Voice Reply On" : "Voice Reply Off"}
-                onClick={toggleVoiceReplies}
-                activeClassName="bg-blue-500 text-slate-950 hover:bg-blue-400"
-              />
-            </div>
-
-            <div className="flex flex-col gap-3 lg:flex-row">
               <input
                 type="text"
-                placeholder="Ask about your PDFs, repo code, or transcripts..."
+                placeholder="Ask Aria anything..."
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
@@ -449,87 +399,132 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
                     void sendMessage(input);
                   }
                 }}
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400"
+                className="min-w-0 flex-1 bg-transparent px-2 py-3 text-base text-white outline-none placeholder:text-slate-500"
               />
+
               <button
+                type="button"
+                onClick={voiceSupported ? handlePushToTalk : undefined}
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-slate-400 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                title="Voice input"
+                disabled={!voiceSupported}
+              >
+                <MicIcon />
+              </button>
+
+              <button
+                type="button"
                 onClick={() => void sendMessage(input)}
                 disabled={loading}
-                className="inline-flex h-14 items-center justify-center rounded-2xl bg-blue-500 px-7 text-sm font-semibold text-slate-950 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-slate-600"
+                className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,var(--primary),var(--primary-light))] text-white shadow-[0_0_22px_rgba(127,13,242,0.34)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Send"
               >
-                Send
+                <ArrowRightIcon />
               </button>
             </div>
           </div>
-        </div>
-      </section>
 
-      <aside className="space-y-4">
-        <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,24,40,0.82),rgba(12,18,31,0.8))] p-5 shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-blue-200/65">
-            Retrieved Context
-          </p>
-          <h3 className="mt-2 text-lg font-semibold text-white">Closest matches</h3>
-          <div className="mt-4 space-y-3">
-            {semanticResults.length ? (
-              semanticResults.map((result, index) => (
-                <div
-                  key={`${result.source}-${index}`}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                >
-                  <div className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                    Match {index + 1}
-                  </div>
-                  <div className="mt-2 text-sm font-medium text-white">{result.source}</div>
-                  <p className="mt-2 line-clamp-4 text-sm text-slate-400">{result.content}</p>
-                </div>
-              ))
-            ) : (
-              <p className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-slate-500">
-                Ask a question to see the most relevant chunks here.
-              </p>
-            )}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <InlineControl active={voiceActive} disabled={!voiceSupported} onClick={toggleVoiceMode}>
+              {voiceActive ? "Voice Chat On" : "Voice Chat Off"}
+            </InlineControl>
+            <InlineControl active={voiceReplyEnabled} onClick={() => setVoiceReplyEnabled((prev) => !prev)}>
+              {voiceReplyEnabled ? "Voice Reply On" : "Voice Reply Off"}
+            </InlineControl>
+            <span className="text-xs text-slate-500">{listeningState}</span>
           </div>
-        </div>
 
-        <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,24,40,0.82),rgba(12,18,31,0.8))] p-5 shadow-[0_22px_60px_rgba(0,0,0,0.22)]">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-blue-200/65">
-            Quick Guide
+          <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
+            Aria can make mistakes. Verify important information.
           </p>
-          <ul className="mt-4 space-y-3 text-sm text-slate-300">
-            <li>The send button is fixed in the composer at the bottom of the chat panel.</li>
-            <li>Voice chat, push-to-talk, and voice reply controls sit directly above the input.</li>
-            <li>Say &quot;Hey ARIA&quot; in voice chat mode, or use push-to-talk for one-shot commands.</li>
-          </ul>
         </div>
-      </aside>
-    </div>
+      </div>
+    </section>
   );
 }
 
-function ControlButton({
-  label,
-  onClick,
-  disabled,
+function Chip({
+  children,
   active,
-  activeClassName,
 }: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
+  children: React.ReactNode;
   active?: boolean;
-  activeClassName?: string;
+}) {
+  return (
+    <span
+      className={`rounded-full border px-3 py-1 ${
+        active
+          ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
+          : "border-white/10 bg-white/5 text-slate-400"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function InlineControl({
+  children,
+  onClick,
+  active,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+      className={`rounded-full border px-3 py-1 text-xs transition ${
         active
-          ? activeClassName ?? "bg-blue-500 text-slate-950 hover:bg-blue-400"
-          : "border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-      } disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-500`}
+          ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
+          : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/8"
+      } disabled:cursor-not-allowed disabled:opacity-40`}
     >
-      {label}
+      {children}
     </button>
+  );
+}
+
+function PaperclipIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        d="M15.172 7 8.586 13.586a2 2 0 1 0 2.828 2.828l6.414-6.586a4 4 0 0 0-5.656-5.656l-6.415 6.585a6 6 0 1 0 8.486 8.486L20.5 13"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 0 1-3-3V5a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        d="M14 5l7 7m0 0-7 7m7-7H3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
   );
 }
