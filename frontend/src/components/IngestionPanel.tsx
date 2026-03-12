@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import { API_BASE_URL } from "@/lib/api";
 
@@ -34,8 +34,7 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
       setStatus(successMessage(data));
       await onKnowledgeChange();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unexpected error";
-      setStatus(message);
+      setStatus(error instanceof Error ? error.message : "Unexpected error");
     } finally {
       setLoading(null);
     }
@@ -98,66 +97,56 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
   };
 
   return (
-    <section className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,24,40,0.88),rgba(12,18,31,0.84))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
-      <p className="text-[11px] uppercase tracking-[0.38em] text-blue-200/65">
-        Knowledge Intake
-      </p>
-      <h2 className="mt-2 text-2xl font-semibold text-white">Feed ARIA context</h2>
-      <p className="mt-2 text-sm text-slate-300">
-        Add documents, videos, and repositories to expand what ARIA can answer from.
-      </p>
-
-      <div className="mt-6 space-y-5">
-        <Field title="Upload PDF">
+    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
+      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
+      <div className="mt-5 space-y-4">
+        <Card
+          title="Upload PDF"
+          actionLabel={loading === "pdf" ? "Uploading..." : "Upload PDF"}
+          onAction={handlePdfUpload}
+          disabled={loading !== null}
+        >
           <input
             type="file"
             accept=".pdf"
             onChange={(event) => setPdfFile(event.target.files?.[0] || null)}
-            className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-blue-400/15 file:px-3 file:py-2 file:text-blue-100"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-3 py-3 text-sm text-slate-300 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-[rgba(127,13,242,0.18)] file:px-3 file:py-2 file:text-[var(--primary-light)]"
           />
-          <ActionButton
-            label={loading === "pdf" ? "Uploading..." : "Upload PDF"}
-            disabled={loading !== null}
-            onClick={handlePdfUpload}
-            accent="blue"
-          />
-        </Field>
+        </Card>
 
-        <Field title="YouTube URL">
-          <input
-            type="text"
-            placeholder="https://youtube.com/watch?v=..."
-            value={youtubeUrl}
-            onChange={(event) => setYoutubeUrl(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400"
-          />
-          <ActionButton
-            label={loading === "youtube" ? "Indexing..." : "Ingest Video"}
-            disabled={loading !== null}
-            onClick={handleYoutubeIngest}
-            accent="rose"
-          />
-        </Field>
-
-        <Field title="GitHub URL">
+        <Card
+          title="Paste GitHub Repo Link"
+          actionLabel={loading === "github" ? "Sync Repo" : "Sync Repo"}
+          onAction={handleGithubIngest}
+          disabled={loading !== null}
+        >
           <input
             type="text"
             placeholder="https://github.com/user/repo"
             value={githubUrl}
             onChange={(event) => setGithubUrl(event.target.value)}
-            className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-400"
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[rgba(127,13,242,0.34)]"
           />
-          <ActionButton
-            label={loading === "github" ? "Indexing..." : "Ingest Repo"}
-            disabled={loading !== null}
-            onClick={handleGithubIngest}
-            accent="neutral"
+        </Card>
+
+        <Card
+          title="YouTube Videos"
+          actionLabel={loading === "youtube" ? "Indexing..." : "Index Video"}
+          onAction={handleYoutubeIngest}
+          disabled={loading !== null}
+        >
+          <input
+            type="text"
+            placeholder="https://youtube.com/watch?v=..."
+            value={youtubeUrl}
+            onChange={(event) => setYoutubeUrl(event.target.value)}
+            className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[rgba(127,13,242,0.34)]"
           />
-        </Field>
+        </Card>
       </div>
 
       {status ? (
-        <div className="mt-5 rounded-2xl border border-blue-300/20 bg-blue-400/10 px-4 py-3 text-sm text-blue-100">
+        <div className="mt-5 rounded-[18px] border border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.12)] p-3 text-sm text-slate-200">
           {status}
         </div>
       ) : null}
@@ -165,46 +154,31 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
   );
 }
 
-function Field({
+function Card({
   title,
+  actionLabel,
+  onAction,
+  disabled,
   children,
 }: {
   title: string;
-  children: ReactNode;
-}) {
-  return (
-    <label className="block space-y-3">
-      <span className="text-sm font-medium text-slate-200">{title}</span>
-      {children}
-    </label>
-  );
-}
-
-function ActionButton({
-  label,
-  onClick,
-  disabled,
-  accent,
-}: {
-  label: string;
-  onClick: () => void;
+  actionLabel: string;
+  onAction: () => void;
   disabled?: boolean;
-  accent: "blue" | "rose" | "neutral";
+  children: React.ReactNode;
 }) {
-  const className =
-    accent === "blue"
-      ? "bg-blue-500 text-slate-950 hover:bg-blue-400"
-      : accent === "rose"
-        ? "bg-rose-500 text-white hover:bg-rose-400"
-        : "bg-white/10 text-white hover:bg-white/15";
-
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`w-full rounded-2xl px-4 py-3 text-sm font-medium transition ${className} disabled:cursor-not-allowed disabled:bg-slate-600`}
-    >
-      {label}
-    </button>
+    <div className="rounded-[18px] border border-white/8 bg-white/4 p-4">
+      <p className="text-lg font-semibold text-white">{title}</p>
+      <div className="mt-4">{children}</div>
+      <button
+        type="button"
+        onClick={onAction}
+        disabled={disabled}
+        className="mt-4 w-full rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--primary-light))] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {actionLabel}
+      </button>
+    </div>
   );
 }
