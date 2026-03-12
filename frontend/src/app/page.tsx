@@ -43,28 +43,59 @@ export default function Home() {
   }, []);
 
   const handleDeleteSource = async (source: string) => {
-    try {
-      setDeletingSource(source);
-      const res = await fetch(`${API_BASE_URL}/knowledge/source`, {
+  try {
+    setDeletingSource(source);
+
+    const res = await fetch(`${API_BASE_URL}/knowledge/source`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source }),
+    });
+
+    const data = await res.json();
+
+    // If backend says not found, still remove from UI
+    if (!res.ok && !data?.detail?.toLowerCase().includes("not found")) {
+      throw new Error(data.detail ?? "Unable to delete indexed source");
+    }
+
+    // Remove it from frontend state
+    setStats((prev) => ({
+      ...prev,
+      sources: prev.sources.filter((s) => s.source !== source),
+      source_count: Math.max(prev.source_count - 1, 0),
+    }));
+
+  } catch (error) {
+    setStatsError(
+      error instanceof Error ? error.message : "Unable to delete indexed source."
+    );
+  } finally {
+    setDeletingSource("");
+  }
+};
+ const handleDeleteAllSources = async () => {
+  try {
+    for (const source of stats.sources) {
+      await fetch(`${API_BASE_URL}/knowledge/source`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source }),
+        body: JSON.stringify({ source: source.source }),
       });
-      const data = (await res.json()) as { detail?: string };
-
-      if (!res.ok) {
-        throw new Error(data.detail ?? "Unable to delete indexed source");
-      }
-
-      await refreshKnowledge();
-    } catch (error) {
-      setStatsError(
-        error instanceof Error ? error.message : "Unable to delete indexed source.",
-      );
-    } finally {
-      setDeletingSource("");
     }
-  };
+
+    // Clear frontend state immediately
+    setStats((prev) => ({
+      ...prev,
+      sources: [],
+      source_count: 0,
+      chunk_count: 0,
+    }));
+
+  } catch (error) {
+    console.error("Delete all failed", error);
+  }
+};
 
   const activeContexts = useMemo(() => {
     const contexts = new Set<string>();
@@ -128,6 +159,7 @@ export default function Home() {
               deletingSource={deletingSource}
               error={statsError}
               onDeleteSource={handleDeleteSource}
+              onDeleteAll={handleDeleteAllSources}
               sources={stats.sources}
             />
           </aside>
@@ -216,15 +248,29 @@ function HistoryCard({
   deletingSource,
   error,
   onDeleteSource,
+  onDeleteAll,
 }: {
   sources: KnowledgeSource[];
   deletingSource: string;
   error: string;
   onDeleteSource: (source: string) => void;
+  onDeleteAll: () => Promise<void>;
 }) {
   return (
     <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
-      <h2 className="text-2xl font-semibold text-white">Indexed History</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-white">Indexed History</h2>
+        {sources.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onDeleteAll()}
+            disabled={deletingSource !== ""}
+            className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-300 transition hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Delete All
+          </button>
+        )}
+      </div>
 
       {error ? (
         <p className="mt-4 rounded-[18px] border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-rose-200">
