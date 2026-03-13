@@ -92,7 +92,11 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   const femaleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Use requestAnimationFrame for smoother scroll performance
+    const scrollTimer = setTimeout(() => {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
+    return () => clearTimeout(scrollTimer);
   }, [messages, interimTranscript, loading]);
 
   // Load available voices and find female voice
@@ -361,7 +365,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
 
   return (
     <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
-      <div className="mx-auto flex min-h-[760px] w-full max-w-3xl flex-col">
+      <div className="mx-auto flex h-[80vh] w-full max-w-3xl flex-col">
         <div className="flex shrink-0 flex-col items-center px-2 pb-4 pt-4 text-center">
           <button
             type="button"
@@ -394,7 +398,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
           </div>
         </div>
 
-        <div className="soft-scroll min-h-0 flex-1 space-y-6 overflow-y-auto px-1 pb-6">
+       <div className="soft-scroll flex-1 overflow-y-auto space-y-6 px-1 pb-65 pr-2 max-h-full">
           {messages.map((msg, index) => (
             <div
               key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
