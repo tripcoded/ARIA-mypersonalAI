@@ -85,7 +85,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
-  const sendMessageRef = useRef<(message: string) => Promise<void>>(async () => {});
+  const sendMessageRef = useRef<(message: string) => Promise<void>>(async () => { });
   const voiceActiveRef = useRef(false);
   const autoSubmitRef = useRef(false);
   const recognitionRunningRef = useRef(false);
@@ -218,30 +218,30 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    
+
     // Use the pre-loaded female voice
     if (femaleVoiceRef.current) {
       utterance.voice = femaleVoiceRef.current;
     }
-    
+
     // Very aggressive feminization settings
     utterance.pitch = 2.5; // Much higher pitch for sweet female voice
     utterance.rate = 0.85; // Slower speech rate for natural sweetness
     utterance.volume = 1;
-    
+
     // Track when speech starts and ends
     utterance.onstart = () => {
       setIsSpeaking(true);
     };
-    
+
     utterance.onend = () => {
       setIsSpeaking(false);
     };
-    
+
     utterance.onerror = () => {
       setIsSpeaking(false);
     };
-    
+
     window.speechSynthesis.speak(utterance);
   };
 
@@ -362,7 +362,7 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
   return (
     <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
       <div className="mx-auto flex min-h-[760px] w-full max-w-3xl flex-col">
-        <div className="flex flex-col items-center px-2 pb-6 pt-6 text-center">
+        <div className="flex shrink-0 flex-col items-center px-2 pb-4 pt-4 text-center">
           <button
             type="button"
             onClick={triggerLogoWobble}
@@ -394,28 +394,26 @@ export default function ChatArea({ onKnowledgeChange }: Props) {
           </div>
         </div>
 
-        <div className="soft-scroll flex-1 space-y-6 overflow-y-auto px-1 pb-6">
+        <div className="soft-scroll min-h-0 flex-1 space-y-6 overflow-y-auto px-1 pb-6">
           {messages.map((msg, index) => (
             <div
               key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
               className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
             >
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${
-                  msg.role === "user"
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${msg.role === "user"
                     ? "border-white/10 bg-zinc-900 text-xs font-bold text-slate-300"
                     : "border-[rgba(127,13,242,0.34)] bg-[var(--primary)] text-white shadow-[0_0_18px_rgba(127,13,242,0.28)]"
-                }`}
+                  }`}
               >
                 {msg.role === "user" ? "ME" : "A"}
               </div>
 
               <article
-                className={`max-w-[88%] flex-1 rounded-[20px] border p-4 ${
-                  msg.role === "user"
+                className={`max-w-[88%] flex-1 rounded-[20px] border p-4 ${msg.role === "user"
                     ? "border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.14)]"
                     : "border-white/8 bg-white/4"
-                }`}
+                  }`}
               >
                 <div className="space-y-2 text-sm leading-7 text-slate-100">
                   {formatBlocks(msg.content).map((line, lineIndex) => (
@@ -539,11 +537,10 @@ function Chip({
 }) {
   return (
     <span
-      className={`rounded-full border px-3 py-1 ${
-        active
+      className={`rounded-full border px-3 py-1 ${active
           ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
           : "border-white/10 bg-white/5 text-slate-400"
-      }`}
+        }`}
     >
       {children}
     </span>
@@ -566,11 +563,10 @@ function InlineControl({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-full border px-3 py-1 text-xs transition ${
-        active
+      className={`rounded-full border px-3 py-1 text-xs transition ${active
           ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
           : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/8"
-      } disabled:cursor-not-allowed disabled:opacity-40`}
+        } disabled:cursor-not-allowed disabled:opacity-40`}
     >
       {children}
     </button>

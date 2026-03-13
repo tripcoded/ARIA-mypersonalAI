@@ -43,59 +43,59 @@ export default function Home() {
   }, []);
 
   const handleDeleteSource = async (source: string) => {
-  try {
-    setDeletingSource(source);
+    try {
+      setDeletingSource(source);
 
-    const res = await fetch(`${API_BASE_URL}/knowledge/source`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ source }),
-    });
-
-    const data = await res.json();
-
-    // If backend says not found, still remove from UI
-    if (!res.ok && !data?.detail?.toLowerCase().includes("not found")) {
-      throw new Error(data.detail ?? "Unable to delete indexed source");
-    }
-
-    // Remove it from frontend state
-    setStats((prev) => ({
-      ...prev,
-      sources: prev.sources.filter((s) => s.source !== source),
-      source_count: Math.max(prev.source_count - 1, 0),
-    }));
-
-  } catch (error) {
-    setStatsError(
-      error instanceof Error ? error.message : "Unable to delete indexed source."
-    );
-  } finally {
-    setDeletingSource("");
-  }
-};
- const handleDeleteAllSources = async () => {
-  try {
-    for (const source of stats.sources) {
-      await fetch(`${API_BASE_URL}/knowledge/source`, {
+      const res = await fetch(`${API_BASE_URL}/knowledge/source`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: source.source }),
+        body: JSON.stringify({ source }),
       });
+
+      const data = await res.json();
+
+      // If backend says not found, still remove from UI
+      if (!res.ok && !data?.detail?.toLowerCase().includes("not found")) {
+        throw new Error(data.detail ?? "Unable to delete indexed source");
+      }
+
+      // Remove it from frontend state
+      setStats((prev) => ({
+        ...prev,
+        sources: prev.sources.filter((s) => s.source !== source),
+        source_count: Math.max(prev.source_count - 1, 0),
+      }));
+
+    } catch (error) {
+      setStatsError(
+        error instanceof Error ? error.message : "Unable to delete indexed source."
+      );
+    } finally {
+      setDeletingSource("");
     }
+  };
+  const handleDeleteAllSources = async () => {
+    try {
+      for (const source of stats.sources) {
+        await fetch(`${API_BASE_URL}/knowledge/source`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: source.source }),
+        });
+      }
 
-    // Clear frontend state immediately
-    setStats((prev) => ({
-      ...prev,
-      sources: [],
-      source_count: 0,
-      chunk_count: 0,
-    }));
+      // Clear frontend state immediately
+      setStats((prev) => ({
+        ...prev,
+        sources: [],
+        source_count: 0,
+        chunk_count: 0,
+      }));
 
-  } catch (error) {
-    console.error("Delete all failed", error);
-  }
-};
+    } catch (error) {
+      console.error("Delete all failed", error);
+    }
+  };
 
   const activeContexts = useMemo(() => {
     const contexts = new Set<string>();
@@ -116,7 +116,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen px-4 pb-6 pt-4 text-slate-100 md:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1680px]">
+      <div className="mx-auto flex h-full max-w-[1680px] flex-col">
         <header className="mb-6 rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.82)] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur xl:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -143,17 +143,17 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_320px]">
-          <aside className="space-y-6">
+        <div className="grid flex-1 gap-6 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_320px]">
+          <aside className="sticky top-4 h-fit space-y-6">
             <IngestionPanel onKnowledgeChange={refreshKnowledge} />
             <RecentsCard sources={stats.sources} />
           </aside>
 
-          <section className="min-w-0">
+          <section className="min-w-0 overflow-hidden rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
             <ChatArea onKnowledgeChange={refreshKnowledge} />
           </section>
 
-          <aside className="space-y-6">
+          <aside className="sticky top-4 h-fit space-y-6">
             <ContextCard activeContexts={activeContexts} stats={stats} />
             <HistoryCard
               deletingSource={deletingSource}
@@ -228,11 +228,10 @@ function ContextCard({
           {activeContexts.map((context) => (
             <span
               key={context}
-              className={`rounded-full border px-3 py-1 text-xs ${
-                context === "Current Goals"
+              className={`rounded-full border px-3 py-1 text-xs ${context === "Current Goals"
                   ? "border-[rgba(127,13,242,0.34)] bg-[rgba(127,13,242,0.14)] text-[var(--primary-light)]"
                   : "border-white/10 bg-white/5 text-slate-400"
-              }`}
+                }`}
             >
               {context}
             </span>
