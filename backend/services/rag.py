@@ -3,13 +3,13 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from langchain_community.vectorstores import Chroma
-from langchain_classic.chains import RetrievalQA
+from services.memory_service import search_memory, save_memory
+
 from langchain_core.documents import Document
-from langchain_core.prompts import PromptTemplate
-from langchain_groq import ChatGroq
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
@@ -18,23 +18,35 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
 
 
-def get_vector_db():
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+# Load embeddings once (important for performance)
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
+
+def get_vector_db():
     return Chroma(
         persist_directory=CHROMA_DB_DIR,
         embedding_function=embeddings
     )
-    
+
+
+# -----------------------------
+# INGESTION
+# -----------------------------
 
 def add_to_vector_db(text: str, source: str, source_type: str = "unknown"):
-    if not text.strip():
-        raise ValueError("No extractable text found for ingestion.")
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    if not text.strip():
+        raise ValueError("No extractable text found.")
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=100
+    )
+
     ingested_at = datetime.now(timezone.utc).isoformat()
+
     docs = [
         Document(
             page_content=chunk,
@@ -42,9 +54,9 @@ def add_to_vector_db(text: str, source: str, source_type: str = "unknown"):
                 "source": source,
                 "source_type": source_type,
                 "ingested_at": ingested_at,
-            },
+            }
         )
-        for chunk in text_splitter.split_text(text)
+        for chunk in splitter.split_text(text)
     ]
 
     db = get_vector_db()
@@ -53,18 +65,25 @@ def add_to_vector_db(text: str, source: str, source_type: str = "unknown"):
 
 
 def add_texts_to_vector_db(items: list[dict], source_type: str = "unknown"):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=100
+    )
+
     ingested_at = datetime.now(timezone.utc).isoformat()
     docs = []
 
     for item in items:
-        text = item.get("text", "")
-        source = item.get("source", "Unknown source")
 
-        if not text or not text.strip():
+        text = item.get("text", "")
+        source = item.get("source", "Unknown")
+
+        if not text.strip():
             continue
 
-        for chunk in text_splitter.split_text(text):
+        for chunk in splitter.split_text(text):
+
             docs.append(
                 Document(
                     page_content=chunk,
@@ -72,26 +91,32 @@ def add_texts_to_vector_db(items: list[dict], source_type: str = "unknown"):
                         "source": source,
                         "source_type": source_type,
                         "ingested_at": ingested_at,
-                    },
+                    }
                 )
             )
 
     if not docs:
-        raise ValueError("No extractable text found for ingestion.")
+        raise ValueError("No extractable text found.")
 
     db = get_vector_db()
     db.add_documents(docs)
     db.persist()
 
 
+# -----------------------------
+# SEARCH
+# -----------------------------
+
 def semantic_search(query: str, limit: int = 5):
+
     db = get_vector_db()
+
     results = db.similarity_search_with_score(query, k=limit)
 
     return [
         {
             "content": doc.page_content,
-            "source": doc.metadata.get("source", "Unknown source"),
+            "source": doc.metadata.get("source", "Unknown"),
             "source_type": doc.metadata.get("source_type", "unknown"),
             "ingested_at": doc.metadata.get("ingested_at"),
             "score": float(score),
@@ -100,16 +125,26 @@ def semantic_search(query: str, limit: int = 5):
     ]
 
 
+# -----------------------------
+# KNOWLEDGE STATS
+# -----------------------------
+
 def get_knowledge_stats():
+
     db = get_vector_db()
+
     raw = db.get(include=["metadatas"])
+
     metadatas = raw.get("metadatas") or []
+
     unique_sources = {}
     source_type_counts = Counter()
 
     for metadata in metadatas:
-        source = metadata.get("source", "Unknown source")
+
+        source = metadata.get("source", "Unknown")
         source_type = metadata.get("source_type", "unknown")
+
         source_type_counts[source_type] += 1
 
         if source not in unique_sources:
@@ -133,16 +168,23 @@ def get_knowledge_stats():
     }
 
 
+# -----------------------------
+# DELETE SOURCE
+# -----------------------------
+
 def delete_source(source: str):
-    if not source or not source.strip():
-        raise ValueError("Source is required.")
+
+    if not source.strip():
+        raise ValueError("Source required")
 
     db = get_vector_db()
+
     matches = db.get(where={"source": source}, include=[])
+
     ids = matches.get("ids") or []
 
     if not ids:
-        raise ValueError("Indexed source not found.")
+        raise ValueError("Source not found")
 
     db.delete(ids=ids)
     db.persist()
@@ -150,18 +192,28 @@ def delete_source(source: str):
     return {"deleted_count": len(ids), "source": source}
 
 
-def get_answer(query: str):
-    db = get_vector_db()
-    llm = ChatGroq(
-        model=CHAT_MODEL,
-        api_key=GROQ_API_KEY
-    )
+# -----------------------------
+# MAIN AI RESPONSE
+# -----------------------------
 
-    prompt = PromptTemplate(
-        input_variables=["context", "question"],
-        template=(
-          """
-            You are ARIA, Om's personal AI assistant and memory companion.
+def get_answer(query: str):
+
+    db = get_vector_db()
+    # simple memory trigger
+    if "remember this" in query.lower() or "save this" in query.lower():
+        save_memory(query)
+
+    # Retrieve personal memories
+    memories = search_memory(query)
+    memory_text = "\n".join(memories[0]) if memories else ""
+
+    # Retrieve knowledge docs
+    retriever = db.as_retriever(search_kwargs={"k": 5})
+    docs = retriever.invoke(query)
+
+    knowledge_context = "\n\n".join(doc.page_content for doc in docs)
+
+    prompt = f"""
 
                 Your role is to help Om by answering questions using the provided context from his saved knowledge
                 (PDFs, YouTube videos, GitHub repositories).
@@ -186,38 +238,26 @@ def get_answer(query: str):
                 * Do not mention the word "context" to the user.
                 * Respond directly and naturally.
 
-                Context:
-                {context}
+Known memories about Om:
+{memory_text}
 
-                User Question:
-                {question}
+Knowledge from Om's saved sources:
+{knowledge_context}
 
-                Answer naturally as ARIA:
+User question:
+{query}
 
-            """
-        ),
+Answer naturally as ARIA.
+"""
+
+    llm = ChatGroq(
+        model=CHAT_MODEL,
+        api_key=GROQ_API_KEY
     )
 
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=db.as_retriever(search_kwargs={"k": 5}),
-        chain_type_kwargs={"prompt": prompt},
-        return_source_documents=True,
-    )
+    response = llm.invoke(prompt)
 
-    result = qa_chain.invoke({"query": query})
-    
-    # Deduplicate sources while maintaining order
-    seen_sources = set()
-    unique_sources = []
-    for doc in result["source_documents"]:
-        source = doc.metadata.get("source", "Unknown source")
-        if source not in seen_sources:
-            unique_sources.append(source)
-            seen_sources.add(source)
-    
     return {
-        "answer": result["result"],
-        "sources": unique_sources,
+        "answer": response.content,
+        "sources": [doc.metadata.get("source", "Unknown") for doc in docs]
     }

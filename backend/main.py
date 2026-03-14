@@ -6,6 +6,7 @@ from fastapi import Body, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from services.memory_service import save_memory, search_memory
 from services.ingestion import process_github, process_pdf, process_youtube
 from services.rag import (
     add_to_vector_db,
@@ -152,3 +153,11 @@ async def chat(request: ChatRequest = Body(...)):
             }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    
+from services.memory_service import search_memory
+from chromadb import Client
+
+@app.get("/memories")
+def get_memories():
+    from services.memory_service import collection
+    return collection.get()
