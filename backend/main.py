@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from services.memory_service import save_memory, search_memory
+from services.memory_service import delete_memory
 from services.ingestion import process_github, process_pdf, process_youtube
 from services.rag import (
     add_to_vector_db,
@@ -161,3 +162,7 @@ from chromadb import Client
 def get_memories():
     from services.memory_service import collection
     return collection.get()
+
+@app.delete("/memories/{memory_id}")
+def remove_memory(memory_id: str):
+    return delete_memory(memory_id)

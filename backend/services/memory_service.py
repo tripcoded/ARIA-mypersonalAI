@@ -31,3 +31,7 @@ def search_memory(query):
     )
 
     return results["documents"]
+
+def delete_memory(memory_id: str):
+    collection.delete(ids=[memory_id])
+    return {"deleted": memory_id}
