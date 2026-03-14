@@ -7,6 +7,7 @@ import AriaLogo from "@/AriaLogo.png";
 import ChatArea from "@/components/ChatArea";
 import IngestionPanel from "@/components/IngestionPanel";
 import { API_BASE_URL, KnowledgeSource, KnowledgeStats } from "@/lib/api";
+import Link from "next/dist/client/link";
 
 const emptyStats: KnowledgeStats = {
   chunk_count: 0,
@@ -117,33 +118,9 @@ export default function Home() {
   return (
     <main className="min-h-screen px-4 pb-6 pt-4 text-slate-100 md:px-6 lg:px-8">
       <div className="mx-auto flex h-full max-w-[1680px] flex-col">
-        <header className="mb-6 rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.82)] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur xl:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center text-[var(--primary-light)]">
-                <Image
-                  src={AriaLogo}
-                  alt="Aria Logo"
-                  width={44}
-                  height={44}
-                />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">Aria</p>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-slate-500">
-                  Personal AI Brain
-                </p>
-              </div>
-            </div>
-            <nav className="hidden items-center gap-10 text-sm text-slate-400 md:flex">
-              <span className="font-medium text-slate-200">Workspace</span>
-              <span>Memories</span>
-              <span>Settings</span>
-            </nav>
-          </div>
-        </header>
+        
 
-        <div className="grid flex-1 gap-6 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_320px]">
+       <div className="grid flex-1 gap-6 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_320px]">
           <aside className="sticky top-4 h-fit space-y-6">
             <IngestionPanel onKnowledgeChange={refreshKnowledge} />
             <RecentsCard sources={stats.sources} />
