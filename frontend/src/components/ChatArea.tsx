@@ -369,6 +369,19 @@ useEffect(() => {
     }
   };
 
+  const clearChat = () => {
+  const defaultMessage: Message[] = [
+    {
+      role: "aria",
+      content:
+        "Hello! I'm Aria, your personal AI brain. I've indexed your synced knowledge sources. How can I assist you in achieving your goals today?",
+    },
+  ];
+
+  setMessages(defaultMessage);
+  localStorage.removeItem("aria-chat");
+};
+
   const triggerLogoWobble = () => {
     setLogoAnimating(false);
     window.setTimeout(() => setLogoAnimating(true), 0);
@@ -383,6 +396,7 @@ useEffect(() => {
             type="button"
             onClick={triggerLogoWobble}
             className="relative border-none bg-transparent p-0"
+        
           >
             <Image
               src={AriaLogo}
@@ -488,6 +502,14 @@ useEffect(() => {
                 }}
                 className="min-w-0 flex-1 bg-transparent px-2 py-3 text-base text-white outline-none placeholder:text-slate-500"
               />
+              <div className="flex justify-end mb-2">
+              <button
+                onClick={clearChat}
+                className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm text-red-400 hover:bg-red-500/20"
+              >
+                Clear Chat
+              </button>
+            </div>
 
               <button
                 type="button"
@@ -498,6 +520,7 @@ useEffect(() => {
               >
                 <MicIcon />
               </button>
+              
 
               <button
                 type="button"
@@ -534,7 +557,7 @@ useEffect(() => {
             )}
             <span className="text-xs text-slate-500">{listeningState}</span>
           </div>
-
+              
           <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
             Aria can make mistakes. Verify important information.
           </p>
