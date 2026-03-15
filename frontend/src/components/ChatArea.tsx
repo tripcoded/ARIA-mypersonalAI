@@ -67,13 +67,25 @@ function formatBlocks(text: string) {
 }
 
 export default function ChatArea({ onKnowledgeChange }: Props) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "aria",
-      content:
-        "Hello! I'm Aria, your personal AI brain. I've indexed your synced knowledge sources. How can I assist you in achieving your goals today?",
-    },
-  ]);
+const defaultMessage: Message[] = [
+  {
+    role: "aria",
+    content:
+      "Hello! I'm Aria, your personal AI brain. I've indexed your synced knowledge sources. How can I assist you in achieving your goals today?",
+  },
+]
+
+const [messages, setMessages] = useState<Message[]>(() => {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("aria-chat")
+    return saved ? JSON.parse(saved) : defaultMessage
+  }
+  return defaultMessage
+});
+useEffect(() => {
+  localStorage.setItem("aria-chat", JSON.stringify(messages));
+}, [messages]);
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
