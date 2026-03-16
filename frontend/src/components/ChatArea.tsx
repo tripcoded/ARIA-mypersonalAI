@@ -113,39 +113,41 @@ useEffect(() => {
 
   // Load available voices and find female voice
   useEffect(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      return;
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    return;
+  }
+
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return;
+
+    const preferredVoices = [
+      "Google UK English Female",
+      "Google US English",
+      "Microsoft Zira",
+      "Samantha",
+      "Victoria",
+      "Karen"
+    ];
+
+    let selectedVoice = voices.find(v =>
+      preferredVoices.some(name => v.name.includes(name))
+    );
+
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang.startsWith("en"));
     }
 
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        // Prioritize English female voices
-        const femaleVoice = voices.find(voice =>
-          voice.lang.startsWith("en") &&
-          (voice.name.toLowerCase().includes("female") ||
-            voice.name.toLowerCase().includes("woman") ||
-            voice.name.toLowerCase().includes("samantha") ||
-            voice.name.toLowerCase().includes("victoria") ||
-            voice.name.toLowerCase().includes("karen") ||
-            voice.name.toLowerCase().includes("zira") ||
-            voice.name.toLowerCase().includes("moira"))
-        ) || voices.find(voice => voice.lang.startsWith("en"));
+    femaleVoiceRef.current = selectedVoice || null;
+  };
 
-        if (femaleVoice) {
-          femaleVoiceRef.current = femaleVoice;
-        }
-      }
-    };
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
 
-    // Load voices immediately and on voices changed
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);
+  return () => {
+    window.speechSynthesis.onvoiceschanged = null;
+  };
+}, []);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -228,39 +230,25 @@ useEffect(() => {
   }, []);
 
   const speak = (text: string) => {
-    if (!voiceReplyEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) {
-      return;
-    }
+  if (!("speechSynthesis" in window)) return;
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.cancel();
 
-    // Use the pre-loaded female voice
-    if (femaleVoiceRef.current) {
-      utterance.voice = femaleVoiceRef.current;
-    }
+  const utterance = new SpeechSynthesisUtterance(text);
 
-    // Very aggressive feminization settings
-    utterance.pitch = 2.5; // Much higher pitch for sweet female voice
-    utterance.rate = 0.85; // Slower speech rate for natural sweetness
-    utterance.volume = 1;
+  if (femaleVoiceRef.current) {
+    utterance.voice = femaleVoiceRef.current;
+  }
 
-    // Track when speech starts and ends
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-    };
+  utterance.rate = 0.8;   // slower = natural
+  utterance.pitch = 2;  // softer voice
+  utterance.volume = 1;
 
-    utterance.onend = () => {
-      setIsSpeaking(false);
-    };
+  utterance.onstart = () => setIsSpeaking(true);
+  utterance.onend = () => setIsSpeaking(false);
 
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  };
-
+  window.speechSynthesis.speak(utterance);
+};
   const stopSpeech = () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
