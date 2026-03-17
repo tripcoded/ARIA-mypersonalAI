@@ -114,10 +114,10 @@ export default function Home() {
     <main className="min-h-screen px-4 pb-6 pt-4 text-slate-100 md:px-6 lg:px-8">
       <div className="mx-auto flex h-full w-full max-w-[1680px] flex-col px-3 sm:px-6 md:px-8">
 
-        {/* MAIN GRID */}
-       <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[320px_minmax(0,1fr)_320px] xl:gap-6 flex-1 min-h-0">
+      {/* MAIN GRID */}
+      <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[320px_minmax(0,1fr)_320px] xl:gap-6 flex-1 min-h-0">
 
-          {/* CHAT FIRST on mobile */}
+        {/* CHAT FIRST on mobile */}
           <section className="order-1 xl:order-2 min-w-0 flex flex-col rounded-[16px] sm:rounded-[24px] border overflow-hidden">
             <ChatArea onKnowledgeChange={refreshKnowledge} />
           </section>
@@ -148,7 +148,7 @@ export default function Home() {
 
 function RecentsCard({ sources }: { sources: KnowledgeSource[] }) {
   return (
-    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
+    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-4 sm:p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
       <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Recents</p>
       <div className="flex flex-col h-full">
         {sources.length ? (
@@ -176,7 +176,7 @@ function ContextCard({
   activeContexts: string[];
 }) {
   return (
-    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
+    <section className="rounded-[16px] sm:rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)]p-4 sm:p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
       <h2 className="text-2xl font-semibold text-white">Context Explorer</h2>
 
       <div className="mt-5 space-y-4">
@@ -224,7 +224,7 @@ function HistoryCard({
   onDeleteAll: () => Promise<void>;
 }) {
   return (
-    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
+    <section className=" rounded-[16px] sm:rounded-[24px]border border-white/8 bg-[rgba(16,12,28,0.76)]p-4 sm:p-6shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
       
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-white">Indexed History</h2>
