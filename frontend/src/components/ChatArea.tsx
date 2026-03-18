@@ -127,11 +127,11 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
       }
 
       const preferredVoices = [
-        "Google UK English Female",
-        "Google US English",
         "Microsoft Zira",
         "Samantha",
         "Victoria",
+        "Google US English",
+        "Google UK English Female",
         "Karen",
       ];
 
@@ -249,9 +249,9 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
       utterance.voice = femaleVoiceRef.current;
     }
 
-    utterance.rate = 0.8;
-    utterance.pitch = 2;
-    utterance.volume = 1;
+    utterance.rate = 0.92;
+    utterance.pitch = 1.05;
+    utterance.volume = 0.95;
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
 
