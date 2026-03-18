@@ -6,14 +6,20 @@ import { API_BASE_URL } from "@/lib/api";
 
 type Props = {
   onKnowledgeChange: () => Promise<void> | void;
+  variant?: "default" | "compact";
 };
 
-export default function IngestionPanel({ onKnowledgeChange }: Props) {
+export default function IngestionPanel({
+  onKnowledgeChange,
+  variant = "default",
+}: Props) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [loading, setLoading] = useState<"pdf" | "youtube" | "github" | null>(null);
   const [status, setStatus] = useState("");
+
+  const compact = variant === "compact";
 
   const handleRequest = async (
     kind: "pdf" | "youtube" | "github",
@@ -96,9 +102,8 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
     );
   };
 
-  return (
-    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
-      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
+  const content = (
+    <>
       <div className="mt-5 space-y-4">
         <Card
           title="Upload PDF"
@@ -116,7 +121,7 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
 
         <Card
           title="Paste GitHub Repo Link"
-          actionLabel={loading === "github" ? "Sync Repo" : "Sync Repo"}
+          actionLabel="Sync Repo"
           onAction={handleGithubIngest}
           disabled={loading !== null}
         >
@@ -150,6 +155,30 @@ export default function IngestionPanel({ onKnowledgeChange }: Props) {
           {status}
         </div>
       ) : null}
+    </>
+  );
+
+  if (compact) {
+    return (
+      <section>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
+            <h3 className="mt-2 text-xl font-semibold text-white">Attach knowledge sources</h3>
+          </div>
+          <span className="rounded-full border border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.12)] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--primary-light)]">
+            Mobile
+          </span>
+        </div>
+        {content}
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-[24px] border border-white/8 bg-[rgba(16,12,28,0.76)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.24)] backdrop-blur">
+      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
+      {content}
     </section>
   );
 }
