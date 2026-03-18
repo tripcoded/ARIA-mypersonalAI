@@ -417,7 +417,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
   return (
     <>
       <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
-        <div className="mx-auto flex h-[calc(100svh-11rem)] max-h-[calc(100svh-11rem)] w-full max-w-3xl flex-col sm:h-[calc(100svh-12rem)] sm:max-h-[calc(100svh-12rem)] xl:h-[80vh] xl:max-h-none">
+        <div className="mx-auto flex h-[calc(100svh-7rem)] sm:h-[calc(100svh-10rem)] xl:h-[80vh] w-full max-w-3xl flex-col sm:h-[calc(100svh-12rem)] sm:max-h-[calc(100svh-12rem)] xl:h-[80vh] xl:max-h-none">
           <div className="flex shrink-0 flex-col items-center px-2 pb-4 pt-2 text-center md:pt-4">
             <button
               type="button"
@@ -452,8 +452,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
             </div>
           </div>
 
-          <div className="soft-scroll flex-1 space-y-4 overflow-y-auto px-1 pb-6 pr-1 sm:space-y-6 sm:pr-2 xl:pb-10">
-            {messages.map((msg, index) => (
+            <div className="soft-scroll flex-1 space-y-4 overflow-y-auto px-1 pb-28 pr-1 sm:space-y-6 sm:pb-16 sm:pr-2 xl:pb-10">                   {messages.map((msg, index) => (
               <div
                 key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
                 className={`flex gap-3 sm:gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
@@ -507,7 +506,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
             <div ref={scrollRef} />
           </div>
 
-          <div className="mt-auto px-1 pt-2">
+          <div className="mt-auto px-1 pt-4 sm:pt-3">
             <div className="rounded-[22px] border border-white/10 bg-[rgba(14,11,24,0.92)] p-2.5 sm:p-3">
               <div className="flex items-center gap-2">
                 <button
@@ -588,7 +587,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
               <InlineControl active={voiceActive} disabled={!voiceSupported} onClick={toggleVoiceMode}>
                 {voiceActive ? "Voice Chat On" : "Voice Chat Off"}
               </InlineControl>
@@ -616,7 +615,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
               <span className="hidden text-xs text-slate-500 sm:inline">{listeningState}</span>
             </div>
 
-            <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
+            <p className="mt-2 text-center text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
               Aria can make mistakes. Verify important information.
             </p>
           </div>
