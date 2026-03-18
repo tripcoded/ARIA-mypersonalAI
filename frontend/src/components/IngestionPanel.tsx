@@ -164,7 +164,7 @@ export default function IngestionPanel({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">Attach knowledge sources</h3>
+            
           </div>
           <span className="rounded-full border border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.12)] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--primary-light)]">
             Mobile

@@ -634,10 +634,8 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
           <section className="absolute inset-x-3 bottom-3 max-h-[78svh] overflow-y-auto rounded-[28px] border border-white/10 bg-[rgba(9,8,16,0.98)] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                  Quick Attach
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Add knowledge on mobile</h2>
+                
+                <h2 className="mt-2 text-2xl font-semibold text-white">Attach Links</h2>
               </div>
 
               <button
@@ -650,10 +648,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
               </button>
             </div>
 
-            <p className="mt-3 text-sm text-slate-400">
-              PDFs, GitHub repos, and YouTube links now live inside the attachment flow so the
-              chat stays visible.
-            </p>
+           
 
             <div className="mt-5">{mobileAttachmentPanel}</div>
           </section>

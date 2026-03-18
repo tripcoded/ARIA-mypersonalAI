@@ -233,10 +233,9 @@ function MobileWorkspaceDrawer({
             <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
               Workspace Drawer
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Mobile control center</h2>
+            <h2 className="mt-2 text-2xl font-semibold text-white">Navigation Panel</h2>
             <p className="mt-2 text-sm text-slate-400">
-              Navigation and indexed knowledge now stay off-canvas so the chat remains fully
-              visible.
+              Navigation and indexed knowledge 
             </p>
           </div>
 

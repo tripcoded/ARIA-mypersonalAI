@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 import Navbar from "@/components/Navbar"
+import SiteFooter from "@/components/SiteFooter"
 
 export const metadata: Metadata = {
   title: "Aria | Personal AI Brain",
@@ -19,11 +20,15 @@ export default function RootLayout({
 
         <main className="min-h-screen px-4 pb-6 pt-4 md:px-6 lg:px-8">
 
-          <div className="mx-auto flex h-full max-w-[1680px] flex-col">
+          <div className="mx-auto flex min-h-screen max-w-[1680px] flex-col">
 
             <Navbar />
 
-            {children}
+            <div className="flex-1">
+              {children}
+            </div>
+
+            <SiteFooter />
 
           </div>
 
