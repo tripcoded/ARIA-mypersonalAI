@@ -100,11 +100,22 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
   const voiceActiveRef = useRef(false);
   const autoSubmitRef = useRef(false);
   const recognitionRunningRef = useRef(false);
-  const femaleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const preferredVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const mobileSpeechRef = useRef(false);
 
   useEffect(() => {
     localStorage.setItem("aria-chat", JSON.stringify(messages));
   }, [messages]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    mobileSpeechRef.current =
+      window.matchMedia("(max-width: 767px)").matches ||
+      /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
+  }, []);
 
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
@@ -126,14 +137,24 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
         return;
       }
 
-      const preferredVoices = [
-        "Microsoft Zira",
-        "Samantha",
-        "Victoria",
-        "Google US English",
-        "Google UK English Female",
-        "Karen",
-      ];
+      const preferredVoices = mobileSpeechRef.current
+        ? [
+            "Google US English",
+            "Google UK English Male",
+            "Daniel",
+            "Alex",
+            "Microsoft David",
+            "Samantha",
+            "Karen",
+          ]
+        : [
+            "Microsoft Zira",
+            "Samantha",
+            "Victoria",
+            "Google US English",
+            "Google UK English Female",
+            "Karen",
+          ];
 
       let selectedVoice = voices.find((voice) =>
         preferredVoices.some((name) => voice.name.includes(name)),
@@ -143,7 +164,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
         selectedVoice = voices.find((voice) => voice.lang.startsWith("en"));
       }
 
-      femaleVoiceRef.current = selectedVoice || null;
+      preferredVoiceRef.current = selectedVoice || null;
     };
 
     loadVoices();
@@ -245,13 +266,14 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
 
     const utterance = new SpeechSynthesisUtterance(text);
 
-    if (femaleVoiceRef.current) {
-      utterance.voice = femaleVoiceRef.current;
+    if (preferredVoiceRef.current) {
+      utterance.voice = preferredVoiceRef.current;
     }
 
-    utterance.rate = 0.92;
-    utterance.pitch = 1.05;
-    utterance.volume = 0.95;
+    utterance.lang = "en-US";
+    utterance.rate = mobileSpeechRef.current ? 0.9 : 0.92;
+    utterance.pitch = mobileSpeechRef.current ? 0.9 : 1.02;
+    utterance.volume = mobileSpeechRef.current ? 0.9 : 0.95;
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
 
