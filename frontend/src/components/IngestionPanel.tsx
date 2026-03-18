@@ -9,6 +9,17 @@ type Props = {
   variant?: "default" | "compact";
 };
 
+async function readResponsePayload(res: Response) {
+  const contentType = res.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    return (await res.json()) as Record<string, unknown>;
+  }
+
+  const text = await res.text();
+  return text ? ({ detail: text } as Record<string, unknown>) : {};
+}
+
 export default function IngestionPanel({
   onKnowledgeChange,
   variant = "default",
@@ -23,15 +34,20 @@ export default function IngestionPanel({
 
   const handleRequest = async (
     kind: "pdf" | "youtube" | "github",
-    request: () => Promise<Response>,
+    request: (signal: AbortSignal) => Promise<Response>,
     successMessage: (data: Record<string, unknown>) => string,
+    pendingMessage: string,
+    timeoutMs = 45000,
   ) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
     setLoading(kind);
-    setStatus("");
+    setStatus(pendingMessage);
 
     try {
-      const res = await request();
-      const data = (await res.json()) as Record<string, unknown>;
+      const res = await request(controller.signal);
+      const data = await readResponsePayload(res);
 
       if (!res.ok) {
         throw new Error(String(data.detail ?? "Request failed"));
@@ -40,8 +56,13 @@ export default function IngestionPanel({
       setStatus(successMessage(data));
       await onKnowledgeChange();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unexpected error");
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setStatus("The upload took too long. Please try again with a smaller PDF or better network.");
+      } else {
+        setStatus(error instanceof Error ? error.message : "Unexpected error");
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setLoading(null);
     }
   };
@@ -52,17 +73,27 @@ export default function IngestionPanel({
       return;
     }
 
+    const normalizedPdf =
+      pdfFile.type === "application/pdf"
+        ? pdfFile
+        : new File([await pdfFile.arrayBuffer()], pdfFile.name || "document.pdf", {
+            type: "application/pdf",
+          });
+
     const formData = new FormData();
-    formData.append("file", pdfFile);
+    formData.append("file", normalizedPdf, normalizedPdf.name);
 
     await handleRequest(
       "pdf",
-      () =>
+      (signal) =>
         fetch(`${API_BASE_URL}/ingest/pdf`, {
           method: "POST",
           body: formData,
+          signal,
         }),
-      (data) => `Indexed PDF: ${String(data.filename ?? pdfFile.name)}`,
+      (data) => `Indexed PDF: ${String(data.filename ?? normalizedPdf.name)}`,
+      `Uploading and indexing ${normalizedPdf.name}...`,
+      120000,
     );
   };
 
@@ -74,13 +105,15 @@ export default function IngestionPanel({
 
     await handleRequest(
       "youtube",
-      () =>
+      (signal) =>
         fetch(`${API_BASE_URL}/ingest/youtube`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: youtubeUrl }),
+          signal,
         }),
       () => "Indexed YouTube transcript.",
+      "Indexing YouTube transcript...",
     );
   };
 
@@ -92,13 +125,16 @@ export default function IngestionPanel({
 
     await handleRequest(
       "github",
-      () =>
+      (signal) =>
         fetch(`${API_BASE_URL}/ingest/github`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: githubUrl }),
+          signal,
         }),
       (data) => `Indexed GitHub repo: ${String(data.files_count ?? 0)} files`,
+      "Syncing repository and indexing files...",
+      90000,
     );
   };
 
@@ -113,15 +149,18 @@ export default function IngestionPanel({
         >
           <input
             type="file"
-            accept=".pdf"
+            accept="application/pdf,.pdf"
             onChange={(event) => setPdfFile(event.target.files?.[0] || null)}
             className="w-full rounded-2xl border border-white/8 bg-black/20 px-3 py-3 text-sm text-slate-300 outline-none file:mr-3 file:rounded-xl file:border-0 file:bg-[rgba(127,13,242,0.18)] file:px-3 file:py-2 file:text-[var(--primary-light)]"
           />
+          {pdfFile ? (
+            <p className="mt-3 text-xs text-slate-400">Selected: {pdfFile.name}</p>
+          ) : null}
         </Card>
 
         <Card
           title="Paste GitHub Repo Link"
-          actionLabel="Sync Repo"
+          actionLabel={loading === "github" ? "Syncing..." : "Sync Repo"}
           onAction={handleGithubIngest}
           disabled={loading !== null}
         >
@@ -164,7 +203,6 @@ export default function IngestionPanel({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Knowledge Base</p>
-            
           </div>
           <span className="rounded-full border border-[rgba(127,13,242,0.28)] bg-[rgba(127,13,242,0.12)] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[var(--primary-light)]">
             Mobile

@@ -1,52 +1,64 @@
-import Link from "next/link";
-
-const footerLinks = [
-  { href: "/", label: "Workspace" },
-  { href: "/memories", label: "Memories" },
-  { href: "/settings", label: "Settings" },
-];
+import { Github, Mail, Linkedin, Globe } from "lucide-react";
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-8 rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.82)] px-5 py-5 shadow-[0_18px_42px_rgba(0,0,0,0.2)] backdrop-blur sm:px-6">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="max-w-xl">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Contact</p>
-          <h2 className="mt-2 text-xl font-semibold text-white">Built with TripCoded</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            Aria is a personal AI workspace by TripCoded. For collaborations, product support, or
-            deployment help, connect with the TripCoded team.
-          </p>
-        </div>
+    <footer className="mt-6 border-t border-white/10 bg-[rgba(10,10,18,0.7)] backdrop-blur">
+      <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-        <div className="flex flex-col gap-4 sm:items-start lg:items-end">
-          <nav className="flex flex-wrap gap-2">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/8 hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-[rgba(127,13,242,0.26)] bg-[rgba(127,13,242,0.1)] px-3 py-1.5 text-xs text-[var(--primary-light)]">
-              Contact TripCoded
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-400">
-              AI Workspace
-            </span>
-          </div>
-
+        {/* LEFT: Brand */}
+        <div>
+          <h2 className="text-base font-semibold text-white">Aria</h2>
           <p className="text-xs text-slate-500">
-            Copyright © {year} TripCoded. All rights reserved.
+            Personal AI Brain · Built by <span className="text-slate-300">TripCoded</span>
           </p>
+          {/* 🔥 Portfolio Link */}
+          <a
+            href="https://portfolio-ashy-six-19.vercel.app/"
+            target="_blank"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--primary-light)] hover:underline hover:scale-105 transition"
+          >
+            <Globe size={14} />
+            About Devloper
+          </a>
         </div>
+
+        {/* RIGHT: Socials */}
+        <div className="flex items-center gap-4 text-slate-400">
+          
+          <a
+            href="mailto:omabhishektripathi@gmail.com"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--primary-light)] hover:underline hover:scale-105 transition"
+            title="Email"
+          >
+            <Mail size={18} />
+          </a>
+
+          <a
+            href="https://github.com/tripcoded"
+            target="_blank"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--primary-light)] hover:underline hover:scale-105 transition"
+            title="GitHub"
+          >
+            <Github size={18} />
+          </a>
+
+          <a
+            href="https://linkedin.com/in/omabhishektripathi"
+            target="_blank"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--primary-light)] hover:underline hover:scale-105 transition"
+            title="LinkedIn"
+          >
+            <Linkedin size={18} />
+          </a>
+
+        </div>
+      </div>
+
+      {/* Bottom line */}
+      <div className="text-center text-xs text-slate-600 pb-4">
+        © {year} TripCoded. All rights reserved.
       </div>
     </footer>
   );

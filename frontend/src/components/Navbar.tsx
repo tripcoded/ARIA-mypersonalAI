@@ -37,6 +37,16 @@ export default function Navbar() {
               <p className="truncate text-[10px] uppercase tracking-[0.28em] text-slate-500">
                 Personal AI Brain
               </p>
+              <div className="relative group">
+              <span className="text-[11px] text-yellow-400 cursor-default">
+                Beta
+              </span>
+
+              {/* Tooltip */}
+              <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-max -translate-x-1/2 rounded-lg border border-white/10 bg-[rgba(15,12,25,0.95)] px-3 py-2 text-xs text-slate-300 opacity-0 shadow-lg backdrop-blur transition-all duration-200 group-hover:opacity-100">
+                Backend running via tunnel (temporary due to infra constraints)
+              </div>
+            </div>
             </div>
           </div>
 
