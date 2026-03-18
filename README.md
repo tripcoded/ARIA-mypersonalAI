@@ -15,11 +15,13 @@ ARIA aims to function as a **personal AI knowledge brain**, allowing users to bu
 ---
 
 # 📸 User Interface
-
-# 📸 User Interface
-
+#### 💻 Desktop View
 <p align="center">
-  <img src="./Uiscreenshot.png" width="65%" />
+  <img src="./Uiscreenshot.png" width="70%" />
+</p>
+
+#### 📱 Mobile View
+<p align="center">
   <img src="./UImobilescreenshot.jpeg" width="25%" />
 </p>
 
