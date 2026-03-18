@@ -16,8 +16,12 @@ ARIA aims to function as a **personal AI knowledge brain**, allowing users to bu
 
 # 📸 User Interface
 
-![ARIA UI Screenshot](./Uiscreenshot.png)
-![ARIA Mobile UI Screenshot](./UImobilescreenshot.jpeg)
+# 📸 User Interface
+
+<p align="center">
+  <img src="./Uiscreenshot.png" width="65%" />
+  <img src="./UImobilescreenshot.jpeg" width="25%" />
+</p>
 
 The interface provides a clean, intuitive design featuring:
 - **Knowledge Base Management**: Upload PDFs, paste GitHub repo links, and index YouTube videos
