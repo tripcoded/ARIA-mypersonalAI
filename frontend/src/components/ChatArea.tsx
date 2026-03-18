@@ -452,7 +452,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
             </div>
           </div>
 
-            <div className="soft-scroll flex-1 space-y-4 overflow-y-auto px-1 pb-28 pr-1 sm:space-y-6 sm:pb-16 sm:pr-2 xl:pb-10">                   {messages.map((msg, index) => (
+            <div className="soft-scroll flex-1 space-y-4 overflow-y-auto px-1 pb-32 pr-1 sm:space-y-6 sm:pb-20 sm:pr-2 xl:pb-61.5">                   {messages.map((msg, index) => (
               <div
                 key={`${msg.role}-${index}-${msg.content.slice(0, 12)}`}
                 className={`flex gap-3 sm:gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
