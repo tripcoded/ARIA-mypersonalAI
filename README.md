@@ -317,7 +317,7 @@ Planned improvements include:
 
 # 📜 License
 
-Copyright (c) 2026 Om
+Copyright (c) 2026 tripcoded
 All rights reserved.
 
 This repository, its source code, documentation, design, and associated materials are proprietary.
