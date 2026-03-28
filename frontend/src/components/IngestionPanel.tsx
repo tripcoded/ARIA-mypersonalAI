@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { API_BASE_URL } from "@/lib/api";
+import { useAriaSettings } from "@/components/SettingsProvider";
 
 type Props = {
   onKnowledgeChange: () => Promise<void> | void;
@@ -24,6 +24,9 @@ export default function IngestionPanel({
   onKnowledgeChange,
   variant = "default",
 }: Props) {
+  const {
+    settings: { apiBaseUrl },
+  } = useAriaSettings();
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
@@ -86,7 +89,7 @@ export default function IngestionPanel({
     await handleRequest(
       "pdf",
       (signal) =>
-        fetch(`${API_BASE_URL}/ingest/pdf`, {
+        fetch(`${apiBaseUrl}/ingest/pdf`, {
           method: "POST",
           body: formData,
           signal,
@@ -106,7 +109,7 @@ export default function IngestionPanel({
     await handleRequest(
       "youtube",
       (signal) =>
-        fetch(`${API_BASE_URL}/ingest/youtube`, {
+        fetch(`${apiBaseUrl}/ingest/youtube`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: youtubeUrl }),
@@ -126,7 +129,7 @@ export default function IngestionPanel({
     await handleRequest(
       "github",
       (signal) =>
-        fetch(`${API_BASE_URL}/ingest/github`, {
+        fetch(`${apiBaseUrl}/ingest/github`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: githubUrl }),

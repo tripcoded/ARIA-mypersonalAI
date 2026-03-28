@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import AriaLogo from "@/AriaLogo.png";
-import { API_BASE_URL } from "@/lib/api";
+import { useAriaSettings } from "@/components/SettingsProvider";
+import { ARIA_CHAT_STORAGE_KEY } from "@/lib/settings";
 
 type Message = {
   role: "user" | "aria";
@@ -76,19 +77,13 @@ function formatBlocks(text: string) {
 }
 
 export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: Props) {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("aria-chat");
-      return saved ? JSON.parse(saved) : defaultMessage;
-    }
-
-    return defaultMessage;
-  });
+  const { settings, updateSettings } = useAriaSettings();
+  const [messages, setMessages] = useState<Message[]>(defaultMessage);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
-  const [voiceReplyEnabled, setVoiceReplyEnabled] = useState(true);
+  const [chatRestored, setChatRestored] = useState(false);
   const [listeningState, setListeningState] = useState("Voice standby");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [logoAnimating, setLogoAnimating] = useState(false);
@@ -102,10 +97,49 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
   const recognitionRunningRef = useRef(false);
   const preferredVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const mobileSpeechRef = useRef(false);
+  const voiceReplyEnabled = settings.voiceReplies;
+  const apiBaseUrl = settings.apiBaseUrl;
 
   useEffect(() => {
-    localStorage.setItem("aria-chat", JSON.stringify(messages));
-  }, [messages]);
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!settings.persistChatHistory) {
+      window.localStorage.removeItem(ARIA_CHAT_STORAGE_KEY);
+      setChatRestored(true);
+      return;
+    }
+
+    try {
+      const saved = window.localStorage.getItem(ARIA_CHAT_STORAGE_KEY);
+
+      if (saved) {
+        const parsed = JSON.parse(saved) as Message[];
+
+        if (Array.isArray(parsed) && parsed.length) {
+          setMessages(parsed);
+        }
+      }
+    } catch {
+      window.localStorage.removeItem(ARIA_CHAT_STORAGE_KEY);
+    } finally {
+      setChatRestored(true);
+    }
+  }, [settings.persistChatHistory]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !chatRestored) {
+      return;
+    }
+
+    if (!settings.persistChatHistory) {
+      window.localStorage.removeItem(ARIA_CHAT_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(ARIA_CHAT_STORAGE_KEY, JSON.stringify(messages));
+  }, [chatRestored, messages, settings.persistChatHistory]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -119,11 +153,14 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
 
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      scrollRef.current?.scrollIntoView({
+        behavior: settings.reduceMotion ? "auto" : "smooth",
+        block: "nearest",
+      });
     }, 0);
 
     return () => clearTimeout(scrollTimer);
-  }, [messages, interimTranscript, loading]);
+  }, [loading, messages, interimTranscript, settings.reduceMotion]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -287,6 +324,12 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
     }
   };
 
+  useEffect(() => {
+    if (!voiceReplyEnabled) {
+      stopSpeech();
+    }
+  }, [voiceReplyEnabled]);
+
   const sendMessage = async (message: string) => {
     const trimmedMessage = message.trim();
 
@@ -300,7 +343,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
     setListeningState(voiceActiveRef.current ? "Aria is thinking..." : "Voice standby");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/chat`, {
+      const res = await fetch(`${apiBaseUrl}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmedMessage }),
@@ -397,10 +440,14 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
 
   const clearChat = () => {
     setMessages(defaultMessage);
-    localStorage.removeItem("aria-chat");
+    window.localStorage.removeItem(ARIA_CHAT_STORAGE_KEY);
   };
 
   const triggerLogoWobble = () => {
+    if (settings.reduceMotion) {
+      return;
+    }
+
     setLogoAnimating(false);
     window.setTimeout(() => setLogoAnimating(true), 0);
     window.setTimeout(() => setLogoAnimating(false), 650);
@@ -477,7 +524,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
                       <p key={lineIndex}>{line}</p>
                     ))}
                   </div>
-                  {msg.sources?.length ? (
+                  {settings.showResponseSources && msg.sources?.length ? (
                     <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-500">
                       Sources: {msg.sources.join(", ")}
                     </p>
@@ -594,7 +641,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
               <InlineControl
                 active={voiceReplyEnabled}
                 onClick={() => {
-                  setVoiceReplyEnabled((prev) => !prev);
+                  updateSettings({ voiceReplies: !voiceReplyEnabled });
 
                   if (voiceReplyEnabled) {
                     stopSpeech();

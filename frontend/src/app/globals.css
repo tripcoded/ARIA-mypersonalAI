@@ -128,3 +128,19 @@ input {
 .animate-continuous-wobble {
   animation: continuous-wobble 5s ease-in-out infinite;
 }
+
+:root[data-motion="reduced"] {
+  scroll-behavior: auto;
+}
+
+:root[data-motion="reduced"] .soft-scroll {
+  scroll-behavior: auto;
+}
+
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

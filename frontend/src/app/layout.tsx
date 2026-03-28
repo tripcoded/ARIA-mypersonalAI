@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 import Navbar from "@/components/Navbar"
+import SettingsProvider from "@/components/SettingsProvider"
 import SiteFooter from "@/components/SiteFooter"
 
 export const metadata: Metadata = {
@@ -17,22 +18,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#05010a] text-slate-100">
+        <SettingsProvider>
+          <main className="min-h-screen px-4 pb-6 pt-4 md:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-screen max-w-[1680px] flex-col">
+              <Navbar />
 
-        <main className="min-h-screen px-4 pb-6 pt-4 md:px-6 lg:px-8">
+              <div className="flex-1">
+                {children}
+              </div>
 
-          <div className="mx-auto flex min-h-screen max-w-[1680px] flex-col">
-
-            <Navbar />
-
-            <div className="flex-1">
-              {children}
+              <SiteFooter />
             </div>
-
-            <SiteFooter />
-
-          </div>
-
-        </main>
+          </main>
+        </SettingsProvider>
 
       </body>
     </html>

@@ -1,5 +1,16 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "https://om-server.teamparadox.in";
+const defaultApiBaseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:8000"
+    : "https://om-server.teamparadox.in";
+
+export const DEFAULT_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? defaultApiBaseUrl;
+export const API_BASE_URL = DEFAULT_API_BASE_URL;
+
+export function normalizeApiBaseUrl(value: string) {
+  const trimmed = value.trim();
+
+  return trimmed ? trimmed.replace(/\/+$/, "") : DEFAULT_API_BASE_URL;
+}
 
 export interface KnowledgeSource {
   source: string;

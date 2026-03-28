@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import ChatArea from "@/components/ChatArea";
 import IngestionPanel from "@/components/IngestionPanel";
-import { API_BASE_URL, KnowledgeSource, KnowledgeStats } from "@/lib/api";
+import { useAriaSettings } from "@/components/SettingsProvider";
+import { KnowledgeSource, KnowledgeStats } from "@/lib/api";
 
 const emptyStats: KnowledgeStats = {
   chunk_count: 0,
@@ -21,14 +22,17 @@ const mobileNavItems = [
 ];
 
 export default function Home() {
+  const {
+    settings: { apiBaseUrl },
+  } = useAriaSettings();
   const [stats, setStats] = useState<KnowledgeStats>(emptyStats);
   const [statsError, setStatsError] = useState("");
   const [deletingSource, setDeletingSource] = useState("");
   const [mobileWorkspaceOpen, setMobileWorkspaceOpen] = useState(false);
 
-  const refreshKnowledge = async () => {
+  const refreshKnowledge = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/knowledge/stats`);
+      const res = await fetch(`${apiBaseUrl}/knowledge/stats`);
       const data = (await res.json()) as KnowledgeStats & { detail?: string };
 
       if (!res.ok) {
@@ -42,11 +46,11 @@ export default function Home() {
         error instanceof Error ? error.message : "Unable to connect to the backend.",
       );
     }
-  };
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     void refreshKnowledge();
-  }, []);
+  }, [refreshKnowledge]);
 
   useEffect(() => {
     document.body.style.overflow = mobileWorkspaceOpen ? "hidden" : "";
@@ -60,7 +64,7 @@ export default function Home() {
     try {
       setDeletingSource(source);
 
-      const res = await fetch(`${API_BASE_URL}/knowledge/source`, {
+      const res = await fetch(`${apiBaseUrl}/knowledge/source`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source }),
@@ -89,7 +93,7 @@ export default function Home() {
   const handleDeleteAllSources = async () => {
     try {
       for (const source of stats.sources) {
-        await fetch(`${API_BASE_URL}/knowledge/source`, {
+        await fetch(`${apiBaseUrl}/knowledge/source`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ source: source.source }),
