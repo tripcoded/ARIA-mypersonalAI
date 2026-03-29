@@ -12,6 +12,15 @@ export function normalizeApiBaseUrl(value: string) {
   return trimmed ? trimmed.replace(/\/+$/, "") : DEFAULT_API_BASE_URL;
 }
 
+export function isLocalApiBaseUrl(value: string) {
+  try {
+    const url = new URL(normalizeApiBaseUrl(value));
+    return ["127.0.0.1", "localhost", "0.0.0.0"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+ 
 export interface KnowledgeSource {
   source: string;
   source_type: string;

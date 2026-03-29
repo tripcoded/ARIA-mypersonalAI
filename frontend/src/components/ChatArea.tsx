@@ -6,12 +6,21 @@ import Image from "next/image";
 
 import AriaLogo from "@/AriaLogo.png";
 import { useAriaSettings } from "@/components/SettingsProvider";
+import { DEFAULT_API_BASE_URL, isLocalApiBaseUrl } from "@/lib/api";
 import { ARIA_CHAT_STORAGE_KEY } from "@/lib/settings";
 
 type Message = {
   role: "user" | "aria";
   content: string;
   sources?: string[];
+};
+
+type BackendHealth = {
+  features?: {
+    conversation_history?: boolean;
+  };
+  status?: string;
+  version?: string;
 };
 
 type Props = {
@@ -61,6 +70,8 @@ declare global {
 }
 
 const WAKE_PHRASE = "hey aria";
+const MAX_CONTEXT_MESSAGES = 12;
+
 const defaultMessage: Message[] = [
   {
     role: "aria",
@@ -89,6 +100,8 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
   const [logoAnimating, setLogoAnimating] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
+  const [backendVersion, setBackendVersion] = useState("");
+  const [backendWarning, setBackendWarning] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const sendMessageRef = useRef<(message: string) => Promise<void>>(async () => {});
@@ -161,6 +174,48 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
 
     return () => clearTimeout(scrollTimer);
   }, [loading, messages, interimTranscript, settings.reduceMotion]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkBackend = async () => {
+      setBackendVersion("");
+      setBackendWarning("");
+
+      try {
+        const res = await fetch(`${apiBaseUrl}/health`);
+        const data = (await res.json()) as BackendHealth & { detail?: string };
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(data.detail ?? "Unable to verify backend health.");
+        }
+
+        setBackendVersion(data.version ?? "");
+
+        if (data.features?.conversation_history !== true) {
+          setBackendWarning(
+            `The connected backend at ${apiBaseUrl} does not report conversation memory support.`,
+          );
+        }
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        setBackendWarning(`Unable to verify the backend at ${apiBaseUrl}.`);
+      }
+    };
+
+    void checkBackend();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -337,8 +392,13 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
       return;
     }
 
+    const nextMessages = [...messages, { role: "user" as const, content: trimmedMessage }];
+    const conversationPayload = nextMessages
+      .slice(-MAX_CONTEXT_MESSAGES)
+      .map(({ role, content }) => ({ role, content }));
+
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: trimmedMessage }]);
+    setMessages(nextMessages);
     setLoading(true);
     setListeningState(voiceActiveRef.current ? "Aria is thinking..." : "Voice standby");
 
@@ -346,7 +406,10 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
       const res = await fetch(`${apiBaseUrl}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmedMessage }),
+        body: JSON.stringify({
+          message: trimmedMessage,
+          messages: conversationPayload,
+        }),
       });
       const data = (await res.json()) as { answer?: string; detail?: string; sources?: string[] };
 
@@ -466,6 +529,30 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
       <section className="rounded-[24px] border border-white/8 bg-[rgba(10,10,18,0.8)] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur md:p-6">
         <div className="mx-auto flex h-[calc(100svh-7rem)] sm:h-[calc(100svh-10rem)] xl:h-[80vh] w-full max-w-3xl flex-col sm:h-[calc(100svh-12rem)] sm:max-h-[calc(100svh-12rem)] xl:h-[80vh] xl:max-h-none">
           <div className="flex shrink-0 flex-col items-center px-2 pb-4 pt-2 text-center md:pt-4">
+            {backendWarning ||
+            (process.env.NODE_ENV === "development" && !isLocalApiBaseUrl(apiBaseUrl)) ? (
+              <div className="mb-4 w-full max-w-2xl rounded-[18px] border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-left text-sm text-amber-100">
+                <p className="font-medium">
+                  {backendWarning ||
+                    `Development mode is connected to ${apiBaseUrl}, not your local backend.`}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-amber-200/80">
+                  Active backend: {apiBaseUrl}
+                  {backendVersion ? ` · ${backendVersion}` : ""}
+                </p>
+                {process.env.NODE_ENV === "development" &&
+                apiBaseUrl !== DEFAULT_API_BASE_URL ? (
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ apiBaseUrl: DEFAULT_API_BASE_URL })}
+                    className="mt-3 rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-amber-100 transition hover:bg-amber-300/20"
+                  >
+                    Use Local Backend
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+
             <button
               type="button"
               onClick={triggerLogoWobble}
@@ -495,6 +582,7 @@ export default function ChatArea({ onKnowledgeChange, mobileAttachmentPanel }: P
                 {voiceReplyEnabled ? "Voice Replies On" : "Voice Replies Off"}
               </Chip>
               <Chip>{loading ? "Thinking" : "Ready"}</Chip>
+              <Chip>{backendVersion || new URL(apiBaseUrl).host}</Chip>
               {isSpeaking ? <Chip active>Speaking</Chip> : null}
             </div>
           </div>

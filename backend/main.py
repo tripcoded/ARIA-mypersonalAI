@@ -21,6 +21,7 @@ from services.rag import (
 load_dotenv()
 
 app = FastAPI(title="ARIA API")
+APP_VERSION = "2026-03-29-chat-history-v2"
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,8 +42,14 @@ class URLRequest(BaseModel):
     url: str
 
 
+class ChatMessage(BaseModel):
+    role: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1)
+
+
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1)
+    message: str | None = Field(default=None, min_length=1)
+    messages: list[ChatMessage] = Field(default_factory=list)
 
 
 class SearchRequest(BaseModel):
@@ -61,7 +68,13 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "version": APP_VERSION,
+        "features": {
+            "conversation_history": True,
+        },
+    }
 
 
 @app.get("/knowledge/stats")
@@ -142,16 +155,38 @@ async def ingest_github(request: URLRequest):
 @app.post("/chat")
 async def chat(request: ChatRequest = Body(...)):
     try:
-        response = get_answer(request.message)
+        conversation = [
+            {"role": item.role, "content": item.content}
+            for item in request.messages
+            if item.content.strip()
+        ]
+
+        current_message = request.message.strip() if request.message else ""
+
+        if not current_message and conversation:
+            for item in reversed(conversation):
+                if item["role"].lower() == "user":
+                    current_message = item["content"].strip()
+                    break
+
+        if not current_message:
+            raise HTTPException(status_code=400, detail="A user message is required.")
+
+        if not conversation:
+            conversation = [{"role": "user", "content": current_message}]
+
+        response = get_answer(current_message, conversation=conversation)
 
         if response is None:
             raise HTTPException(status_code=500, detail="ARIA failed to generate a response.")
 
         return {
-            "query": request.message,
+            "query": current_message,
             "answer": response.get("answer", ""),
             "sources": response.get("sources", []),
             }
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     

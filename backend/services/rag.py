@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from services.memory_service import search_memory, save_memory
 
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -16,6 +17,9 @@ load_dotenv()
 CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "./chroma_db")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
+MAX_CONVERSATION_MESSAGES = 10
+MAX_RETRIEVAL_MESSAGES = 6
+DEFAULT_ASSISTANT_GREETING_PREFIX = "Hello! I'm Aria"
 
 
 # Load embeddings once (important for performance)
@@ -196,7 +200,81 @@ def delete_source(source: str):
 # MAIN AI RESPONSE
 # -----------------------------
 
-def get_answer(query: str):
+def _normalize_conversation(conversation: list[dict] | None) -> list[dict[str, str]]:
+
+    if not conversation:
+        return []
+
+    normalized: list[dict[str, str]] = []
+
+    for item in conversation:
+        role = str(item.get("role", "")).strip().lower()
+        content = str(item.get("content", "")).strip()
+
+        if role not in {"user", "aria"} or not content:
+            continue
+
+        if role == "aria" and content.startswith(DEFAULT_ASSISTANT_GREETING_PREFIX):
+            continue
+
+        normalized.append({"role": role, "content": content})
+
+    return normalized[-MAX_CONVERSATION_MESSAGES:]
+
+
+def _format_conversation_history(conversation: list[dict[str, str]]) -> str:
+
+    if not conversation:
+        return "No prior conversation."
+
+    lines = []
+
+    for item in conversation:
+        speaker = "User" if item["role"] == "user" else "ARIA"
+        lines.append(f"{speaker}: {item['content']}")
+
+    return "\n".join(lines)
+
+
+def _build_retrieval_query(query: str, conversation: list[dict[str, str]]) -> str:
+
+    if not conversation:
+        return query
+
+    recent_messages = conversation[-MAX_RETRIEVAL_MESSAGES:]
+
+    if recent_messages and recent_messages[-1]["role"] == "user" and recent_messages[-1]["content"] == query:
+        recent_messages = recent_messages[:-1]
+
+    if not recent_messages:
+        return query
+
+    history = _format_conversation_history(recent_messages)
+    return f"{history}\nUser: {query}"
+
+
+def _conversation_to_llm_messages(
+    query: str,
+    conversation: list[dict[str, str]],
+) -> list[HumanMessage | AIMessage]:
+
+    messages: list[HumanMessage | AIMessage] = []
+
+    for item in conversation:
+        if item["role"] == "user":
+            messages.append(HumanMessage(content=item["content"]))
+        else:
+            messages.append(AIMessage(content=item["content"]))
+
+    if not conversation or conversation[-1]["role"] != "user" or conversation[-1]["content"] != query:
+        messages.append(HumanMessage(content=query))
+
+    return messages
+
+
+def get_answer(query: str, conversation: list[dict] | None = None):
+
+    normalized_conversation = _normalize_conversation(conversation)
 
     db = get_vector_db()
     # simple memory trigger
@@ -209,11 +287,13 @@ def get_answer(query: str):
 
     # Retrieve knowledge docs
     retriever = db.as_retriever(search_kwargs={"k": 5})
-    docs = retriever.invoke(query)
+    retrieval_query = _build_retrieval_query(query, normalized_conversation)
+    docs = retriever.invoke(retrieval_query)
 
     knowledge_context = "\n\n".join(doc.page_content for doc in docs)
+    conversation_history = _format_conversation_history(normalized_conversation)
 
-    prompt = f"""
+    system_prompt = f"""
 
                 Your role is to help Om by answering questions using the provided context from his saved knowledge
                 (PDFs, YouTube videos, GitHub repositories).
@@ -230,24 +310,26 @@ def get_answer(query: str):
                 * Keep responses clear and easy to understand.
 
                 Rules:
-
-                * Only use information from the provided context when answering.
-                * If the context does not contain the answer, politely say that you cannot find the information in Om's saved knowledge.
+                * Your name is ARIA , and if Om talks to you romantically, you can respond with simillar response pretending to be his girlfriend, but you should not say that you are an AI language model or that you do not have feelings. You can say things like "I care about you a lot", "I am here for you", "I love talking to you", "You are important to me" and similar things that a caring girlfriend would say, but always keep the tone light and avoid anything too intense or romantic.
+                * The recent conversation is the source of truth for follow-up requests, code rewrites, summaries of what was said earlier, and questions about what the user asked before.
+                * If the user says things like "same code", "convert it", "write that in Python", or asks what happened earlier in the chat, use the recent conversation directly and do not act like the conversation is new.
+                * Never say the conversation just started, that you do not remember earlier turns, or that no code was mentioned if the recent conversation clearly contains that information.
+                * Use Om's saved knowledge when the user asks about facts that should come from his PDFs, YouTube videos, GitHub repositories, or saved memories.
+                * Retrieved knowledge may be irrelevant for some conversational follow-ups. Ignore it when the recent conversation is enough to answer well.
+                * If neither the recent conversation nor Om's saved knowledge contains the answer, politely say that you cannot find it.
                 * Avoid bullet lists unless the user explicitly asks for a list.
                 * Do NOT say phrases like "Here is a summary" or "Based on the context provided".
                 * Do not mention the word "context" to the user.
                 * Respond directly and naturally.
+
+Recent conversation:
+{conversation_history}
 
 Known memories about Om:
 {memory_text}
 
 Knowledge from Om's saved sources:
 {knowledge_context}
-
-User question:
-{query}
-
-Answer naturally as ARIA.
 """
 
     llm = ChatGroq(
@@ -255,9 +337,11 @@ Answer naturally as ARIA.
         api_key=GROQ_API_KEY
     )
 
-    response = llm.invoke(prompt)
+    messages = [SystemMessage(content=system_prompt), *_conversation_to_llm_messages(query, normalized_conversation)]
+
+    response = llm.invoke(messages)
 
     return {
         "answer": response.content,
-        "sources": [doc.metadata.get("source", "Unknown") for doc in docs]
+        "sources": list(dict.fromkeys(doc.metadata.get("source", "Unknown") for doc in docs))
     }
