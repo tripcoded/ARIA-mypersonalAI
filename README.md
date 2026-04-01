@@ -177,8 +177,11 @@ GROQ_API_KEY=
 ### 🔧 Optional
 
 ```id="rc9ygo"
+DATA_DIR=
 GROQ_CHAT_MODEL=
 CHROMA_DB_DIR=
+UPLOAD_DIR=
+CORS_ALLOWED_ORIGINS=
 GITHUB_TOKEN=
 GITHUB_MAX_FILES=
 GITHUB_MAX_FILE_BYTES=
@@ -223,6 +226,38 @@ NEXT_PUBLIC_API_URL
 
 ---
 
+# ☁️ Render Deployment
+
+The backend can be deployed to **Render** as a Python web service.
+
+Recommended service settings:
+
+* **Root Directory:** `backend`
+* **Build Command:** `pip install -r requirements.txt`
+* **Start Command:** `python -m uvicorn main:app --host 0.0.0.0 --port $PORT`
+* **Health Check Path:** `/health`
+
+Recommended environment variables:
+
+* `GROQ_API_KEY`
+* `GROQ_CHAT_MODEL`
+* `GITHUB_TOKEN` (optional)
+* `DATA_DIR=/opt/render/project/src/backend/storage`
+
+If you want uploaded files and indexed Chroma data to survive restarts and redeploys, attach a **persistent disk** and mount it at:
+
+```id="renderdisk"
+/opt/render/project/src/backend/storage
+```
+
+If your frontend runs on a domain other than the default Vercel URL in `backend/main.py`, add it with:
+
+```id="corsorigin"
+CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
+```
+
+---
+
 # 📌 Operational Notes
 
 ### 🧑‍💻 GitHub Repository Ingestion
@@ -251,7 +286,7 @@ Because of this, YouTube ingestion should not yet be considered fully reliable.
 
 ## ☁️ Backend Deployment
 
-The backend service is currently intended to run **locally**.
+The backend can run on Render or similar platforms, but it works best with a persistent disk and enough RAM for embedding generation.
 
 ARIA performs several compute-intensive tasks including:
 
@@ -268,7 +303,7 @@ Most free-tier cloud platforms impose limitations on:
 * execution time
 * persistent storage
 
-Because of these infrastructure constraints, stable deployment requires more capable infrastructure that supports persistent storage and longer processing tasks.
+Because of these infrastructure constraints, low-tier or fully ephemeral instances may still struggle with cold starts, indexing speed, and data persistence.
 
 ---
 

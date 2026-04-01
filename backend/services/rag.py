@@ -14,7 +14,8 @@ from langchain_groq import ChatGroq
 
 load_dotenv()
 
-CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "./chroma_db")
+DATA_DIR = os.getenv("DATA_DIR", ".")
+CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", os.path.join(DATA_DIR, "chroma_db"))
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
 MAX_CONVERSATION_MESSAGES = 10

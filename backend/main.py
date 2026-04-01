@@ -20,21 +20,27 @@ from services.rag import (
 
 load_dotenv()
 
+DATA_DIR = os.getenv("DATA_DIR", ".")
+DEFAULT_ALLOWED_ORIGINS = ["https://aria-mypersonal-ai.vercel.app"]
+EXTRA_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 app = FastAPI(title="ARIA API")
 APP_VERSION = "2026-03-29-chat-history-v2"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://aria-mypersonal-ai.vercel.app",
-    ],
+    allow_origins=[*DEFAULT_ALLOWED_ORIGINS, *EXTRA_ALLOWED_ORIGINS],
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(DATA_DIR, "uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 

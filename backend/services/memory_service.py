@@ -1,9 +1,17 @@
+import os
+
 import chromadb
+from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
+
+load_dotenv()
+
+DATA_DIR = os.getenv("DATA_DIR", ".")
+CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", os.path.join(DATA_DIR, "chroma_db"))
 
 client = chromadb.Client(
     settings=chromadb.config.Settings(
-        persist_directory="backend/chroma_db"
+        persist_directory=CHROMA_DB_DIR
     )
 )
 
