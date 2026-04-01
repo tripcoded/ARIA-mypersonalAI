@@ -242,13 +242,13 @@ Recommended environment variables:
 * `GROQ_API_KEY`
 * `GROQ_CHAT_MODEL`
 * `GITHUB_TOKEN` (optional)
-* `DATA_DIR=/opt/render/project/src/backend/storage`
+* `DATA_DIR=./storage`
 
-If you want uploaded files and indexed Chroma data to survive restarts and redeploys, attach a **persistent disk** and mount it at:
+This repo is currently configured for **Render free tier**, so it does **not** use a persistent disk.
 
-```id="renderdisk"
-/opt/render/project/src/backend/storage
-```
+That means uploaded files, indexed Chroma data, and saved memory can be lost whenever the service restarts, redeploys, or sleeps.
+
+If you later move to a paid Render plan, you can attach a persistent disk and set `DATA_DIR` to the disk mount path.
 
 If your frontend runs on a domain other than the default Vercel URL in `backend/main.py`, add it with:
 
