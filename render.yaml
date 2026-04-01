@@ -18,10 +18,10 @@ services:
       - key: GROQ_CHAT_MODEL
         value: llama-3.3-70b-versatile
       - key: GITHUB_TOKEN
-        sync: false
+        value: ""
       - key: GITHUB_MAX_FILES
         value: "150"
       - key: GITHUB_MAX_FILE_BYTES
         value: "200000"
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: ""
